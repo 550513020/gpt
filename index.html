@@ -16,12 +16,9 @@
   <div id="load">正在建立庭院场景…</div>
   <div id="hud"><b>滨水商业庭院</b><span>拖拽旋转 · 滚轮缩放 · 右键平移</span></div>
   <button id="reset" type="button">复位视角</button>
-  <script type="importmap">
-    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}
-  </script>
   <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
-    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/controls/OrbitControls.js';
+    import * as THREE from 'https://esm.sh/three@0.160.1';
+    import { OrbitControls } from 'https://esm.sh/three@0.160.1/examples/jsm/controls/OrbitControls.js';
 
     const scene=new THREE.Scene(); scene.background=new THREE.Color(0xbdd7ea); scene.fog=new THREE.Fog(0xbdd7ea,28,62);
     // Model coordinates use architecture convention: X=width, Y=depth, Z=height.
