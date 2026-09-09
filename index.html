@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>婊ㄦ按鍟嗕笟搴櫌 路 3D</title>
+  <title>滨水商业庭院 · 3D</title>
   <style>
     *{box-sizing:border-box} body{margin:0;overflow:hidden;background:#bcd6ea;font-family:system-ui,"Microsoft YaHei",sans-serif;color:#fff}
     canvas{display:block} #hud{position:fixed;left:22px;top:20px;padding:14px 16px;background:#1b211bd9;border:1px solid #ffffff30;border-radius:10px;backdrop-filter:blur(10px);pointer-events:none}
@@ -13,9 +13,12 @@
   </style>
 </head>
 <body>
-  <div id="load">姝ｅ湪寤虹珛搴櫌鍦烘櫙鈥?/div>
-  <div id="hud"><b>婊ㄦ按鍟嗕笟搴櫌</b><span>鎷栨嫿鏃嬭浆 路 婊氳疆缂╂斁 路 鍙抽敭骞崇Щ</span></div>
-  <button id="reset" type="button">澶嶄綅瑙嗚</button>
+  <div id="load">正在建立庭院场景…</div>
+  <div id="hud"><b>滨水商业庭院</b><span>拖拽旋转 · 滚轮缩放 · 右键平移</span></div>
+  <button id="reset" type="button">复位视角</button>
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}
+  </script>
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
     import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/controls/OrbitControls.js';
