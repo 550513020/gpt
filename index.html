@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>婊ㄦ按鍟嗕笟搴櫌 路 3D</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;overflow:hidden;background:#bcd6ea;font-family:system-ui,"Microsoft YaHei",sans-serif;color:#fff}
+    canvas{display:block} #hud{position:fixed;left:22px;top:20px;padding:14px 16px;background:#1b211bd9;border:1px solid #ffffff30;border-radius:10px;backdrop-filter:blur(10px);pointer-events:none}
+    #hud b{display:block;font-size:16px;letter-spacing:.08em} #hud span{display:block;margin-top:6px;font-size:12px;opacity:.8}
+    #reset{position:fixed;right:22px;bottom:22px;border:0;border-radius:8px;background:#f4e8d2;color:#253226;padding:10px 14px;font:inherit;cursor:pointer}
+    #reset:hover{background:#fff7e9} #load{position:fixed;inset:0;display:grid;place-items:center;background:#cfe0ee;color:#26372b;z-index:2;font-size:14px}
+  </style>
+</head>
+<body>
+  <div id="load">姝ｅ湪寤虹珛搴櫌鍦烘櫙鈥?/div>
+  <div id="hud"><b>婊ㄦ按鍟嗕笟搴櫌</b><span>鎷栨嫿鏃嬭浆 路 婊氳疆缂╂斁 路 鍙抽敭骞崇Щ</span></div>
+  <button id="reset" type="button">澶嶄綅瑙嗚</button>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/controls/OrbitControls.js';
+
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0xbdd7ea); scene.fog=new THREE.Fog(0xbdd7ea,28,62);
+    // Model coordinates use architecture convention: X=width, Y=depth, Z=height.
+    // Convert them once into Three.js's Y-up world.
+    const world=new THREE.Group(); world.rotation.x=-Math.PI/2; scene.add(world);
+    const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,120);
+    const startPos=new THREE.Vector3(0,4.2,18), target=new THREE.Vector3(0,3.3,-3); camera.position.copy(startPos);
+    const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(renderer.domElement);
+    const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(target);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.48;controls.minDistance=8;controls.maxDistance=34;
+    const M={ concrete:new THREE.MeshStandardMaterial({color:0xc6baa4,roughness:.82}), wood:new THREE.MeshStandardMaterial({color:0x6b3415,roughness:.45}), oak:new THREE.MeshStandardMaterial({color:0xb87539,roughness:.55}), glass:new THREE.MeshPhysicalMaterial({color:0x3b817a,roughness:.12,metalness:.08,transmission:.22,transparent:true,opacity:.58,side:THREE.DoubleSide}), bronze:new THREE.MeshStandardMaterial({color:0x241208,metalness:.8,roughness:.28}), stone:new THREE.MeshStandardMaterial({color:0x958d7c,roughness:.94}), green:new THREE.MeshStandardMaterial({color:0x17431e,roughness:.9}), leaf:new THREE.MeshStandardMaterial({color:0x2f6d25,roughness:.85}), red:new THREE.MeshStandardMaterial({color:0xa93c12,roughness:.8}), purple:new THREE.MeshStandardMaterial({color:0x9c4d92,roughness:.85}), water:new THREE.MeshPhysicalMaterial({color:0x1b8080,roughness:.06,metalness:.25,transparent:true,opacity:.76}) };
+    const box=(x,y,z,w,d,h,m,bevel=0)=>{const g=new THREE.BoxGeometry(w,d,h,1,1,1);const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;if(bevel){const e=new THREE.EdgesGeometry(g);/* subtle edge */}world.add(o);return o};
+    const cyl=(x,y,z,r,h,m,radial=16)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,radial),m);o.rotation.x=Math.PI/2;o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;world.add(o);return o};
+    const rounded=(x,y,z,w,d,h,r,m)=>{const s=new THREE.Shape();const a=x-w/2,b=y-d/2;s.moveTo(a+r,b);s.lineTo(a+w-r,b);s.quadraticCurveTo(a+w,b,a+w,b+r);s.lineTo(a+w,b+d-r);s.quadraticCurveTo(a+w,b+d,a+w-r,b+d);s.lineTo(a+r,b+d);s.quadraticCurveTo(a,b+d,a,b+d-r);s.lineTo(a,b+r);s.quadraticCurveTo(a,b,a+r,b);const g=new THREE.ExtrudeGeometry(s,{depth:h,bevelEnabled:true,bevelSize:.06,bevelThickness:.06,bevelSegments:2});g.translate(0,0,z-h/2);const o=new THREE.Mesh(g,m);o.castShadow=o.receiveShadow=true;world.add(o);return o};
+    // ground and promenade
+    box(0,1,-.2,36,32,.4,M.stone);box(0,-.6,.035,6.1,27,.09,new THREE.MeshStandardMaterial({color:0xc1b8a5,roughness:1}));
+    for(let y=-12;y<12;y+=4)box(0,y,.09,6.15,.045,.012,M.bronze);
+    // three stacked curving wings
+    for(const z of [3.25,6.45,9.65]){
+      rounded(-8,2,z,12.8,16,.48,1.45,M.concrete); rounded(8,2.8,z,12.8,17.5,.48,1.55,M.concrete);
+      box(-6.0,1.7,z-1.0,7.8,.10,1.72,M.glass); box(6.0,1.8,z-1.0,7.8,.10,1.72,M.glass);
+      box(-7.1,-1.05,z-.29,9.1,3.0,.12,M.oak); box(7.1,-.85,z-.29,9.1,3.2,.12,M.oak);
+      box(-6.0,1.62,z-.54,8.0,.13,.20,new THREE.MeshStandardMaterial({color:0x54b8a7,emissive:0x0c332b,roughness:.3}));
+      box(6.0,1.72,z-.54,8.0,.13,.20,new THREE.MeshStandardMaterial({color:0x54b8a7,emissive:0x0c332b,roughness:.3}));
+    }
+    // ground-level glass frontages and vertical timber screen
+    for(const sign of [-1,1]){const x=sign*6.2;box(x,-2.1,1.55,8.4,.12,3.0,M.glass);box(x,-2.15,3.08,8.55,.35,.36,M.wood);for(let i=-3.7;i<=3.7;i+=.45){box(x+i,-2.22,1.55,.075,.16,3.05,i<-.6?M.oak:M.bronze)}}
+    // distant bridge
+    box(0,8,6.95,10,.85,.25,M.concrete);box(0,8,6.22,9.8,.08,1.15,M.glass);for(let x=-4.6;x<4.7;x+=.55)box(x,7.94,6.25,.035,.09,1.2,M.bronze);
+    // water rill
+    box(-7.1,-8,.05,6.1,2.5,.18,M.bronze);box(-7.1,-8,.17,5.8,2.22,.04,M.water);
+    // furniture
+    function cafe(x,y){cyl(x,y,.75,.38,.07,M.wood);cyl(x,y,.40,.055,.66,M.bronze);cyl(x,y,.08,.24,.055,M.bronze);for(let a=0;a<3;a++){let q=a*Math.PI*2/3+.25,xx=x+Math.cos(q)*.72,yy=y+Math.sin(q)*.72;box(xx,yy,.42,.5,.5,.08,M.oak);box(xx,yy+.13,.72,.5,.08,.5,M.oak)}}
+    [[-7,-4],[-5,-5.2],[5.2,-4.4],[7.5,-5.4],[7.1,1.2]].forEach(p=>cafe(...p));
+    // trees / bushes
+    function tree(x,y,h,spread,material){cyl(x,y,h/2,.18,h,M.wood,10);for(let i=0;i<30;i++){let a=Math.random()*6.283,r=Math.pow(Math.random(),.55)*spread,z=h*.72+(Math.random()-.45)*2;let leaf=new THREE.Mesh(new THREE.DodecahedronGeometry(.68,1),material);leaf.scale.set(1.1,.78,.78);leaf.position.set(x+Math.cos(a)*r,y+Math.sin(a)*r,z);leaf.castShadow=true;world.add(leaf)}}
+    tree(-6,-3.5,7.2,2.8,M.leaf);tree(.5,2.5,4.4,2.2,M.red);tree(5,3.4,3.9,2,M.purple);tree(8.4,5,4.2,2.1,M.leaf);
+    for(const [x,y] of [[-7,-6.8],[-4,-6.6],[-2.4,2.5],[2.7,1.6],[3.9,4.8],[7.3,2.2],[9,6.6]])for(let i=0;i<7;i++){let a=Math.random()*6.283,r=Math.random()*.8;let b=new THREE.Mesh(new THREE.SphereGeometry(.48,10,8),M.green);b.scale.y=.75;b.position.set(x+Math.cos(a)*r,y+Math.sin(a)*r,.35);b.castShadow=true;world.add(b)}
+    // schematic people provide scale
+    function person(x,y,c){cyl(x,y,.44,.10,.88,M.bronze,10);box(x,y,1.28,.42,.28,.75,c);let h=new THREE.Mesh(new THREE.SphereGeometry(.17,12,10),new THREE.MeshStandardMaterial({color:0x8b5035,roughness:.8}));h.position.set(x,y,1.85);h.castShadow=true;world.add(h)}
+    const coral=new THREE.MeshStandardMaterial({color:0xc6453a,roughness:.75});[[-.4,-3.8, M.bronze],[.35,-3.65,coral],[-1.3,2.2,M.bronze],[1.5,1.8,coral],[2.5,.9,M.bronze],[4.3,-2.9,M.bronze],[-4.1,-3,coral]].forEach(p=>person(...p));
+    // lighting
+    scene.add(new THREE.HemisphereLight(0xeaf5ff,0x4d3b1e,2.2));const sun=new THREE.DirectionalLight(0xffe4b5,4.1);sun.position.set(-12,-10,17);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-20;sun.shadow.camera.right=20;sun.shadow.camera.top=20;sun.shadow.camera.bottom=-20;scene.add(sun);
+    const amb=new THREE.PointLight(0xffb96a,20,14,2);amb.position.set(-6,-2,3);scene.add(amb);
+    document.getElementById('reset').onclick=()=>{camera.position.copy(startPos);controls.target.copy(target)};
+    addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+    const tick=()=>{controls.update();renderer.render(scene,camera);requestAnimationFrame(tick)};tick();document.getElementById('load').remove();
+  </script>
+</body>
+</html>
+
