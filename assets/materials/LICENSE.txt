@@ -1,0 +1,9 @@
+Surface textures by Poly Haven, released under CC0.
+https://polyhaven.com/license
+
+Oak: https://polyhaven.com/a/oak_wood_planks
+Concrete: https://polyhaven.com/a/concrete_floor_02
+Stone: https://polyhaven.com/a/marble_01
+Leather: https://polyhaven.com/a/brown_leather
+
+Original download URLs and asset sizes are recorded in sources.json.

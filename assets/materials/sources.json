@@ -1,0 +1,122 @@
+[
+  {
+    "name": "oak",
+    "id": "oak_wood_planks",
+    "channel": "Diffuse",
+    "file": "oak-diff.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_wood_planks/oak_wood_planks_diff_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/oak_wood_planks",
+    "bytes": 696814
+  },
+  {
+    "name": "oak",
+    "id": "oak_wood_planks",
+    "channel": "nor_gl",
+    "file": "oak-normal.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_wood_planks/oak_wood_planks_nor_gl_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/oak_wood_planks",
+    "bytes": 392213
+  },
+  {
+    "name": "oak",
+    "id": "oak_wood_planks",
+    "channel": "Rough",
+    "file": "oak-roughness.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_wood_planks/oak_wood_planks_rough_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/oak_wood_planks",
+    "bytes": 845590
+  },
+  {
+    "name": "concrete",
+    "id": "concrete_floor_02",
+    "channel": "Diffuse",
+    "file": "concrete-diff.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_02/concrete_floor_02_diff_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/concrete_floor_02",
+    "bytes": 776097
+  },
+  {
+    "name": "concrete",
+    "id": "concrete_floor_02",
+    "channel": "nor_gl",
+    "file": "concrete-normal.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_02/concrete_floor_02_nor_gl_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/concrete_floor_02",
+    "bytes": 192757
+  },
+  {
+    "name": "concrete",
+    "id": "concrete_floor_02",
+    "channel": "Rough",
+    "file": "concrete-roughness.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_02/concrete_floor_02_rough_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/concrete_floor_02",
+    "bytes": 318550
+  },
+  {
+    "name": "marble",
+    "id": "marble_01",
+    "channel": "Diffuse",
+    "file": "marble-diff.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/marble_01/marble_01_diff_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/marble_01",
+    "bytes": 305029
+  },
+  {
+    "name": "marble",
+    "id": "marble_01",
+    "channel": "nor_gl",
+    "file": "marble-normal.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/marble_01/marble_01_nor_gl_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/marble_01",
+    "bytes": 110230
+  },
+  {
+    "name": "marble",
+    "id": "marble_01",
+    "channel": "Rough",
+    "file": "marble-roughness.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/marble_01/marble_01_rough_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/marble_01",
+    "bytes": 91848
+  },
+  {
+    "name": "leather",
+    "id": "brown_leather",
+    "channel": "Diffuse",
+    "file": "leather-diff.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_albedo_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/brown_leather",
+    "bytes": 503348
+  },
+  {
+    "name": "leather",
+    "id": "brown_leather",
+    "channel": "nor_gl",
+    "file": "leather-normal.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_nor_gl_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/brown_leather",
+    "bytes": 863280
+  },
+  {
+    "name": "leather",
+    "id": "brown_leather",
+    "channel": "Rough",
+    "file": "leather-roughness.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_rough_1k.jpg",
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/brown_leather",
+    "bytes": 686142
+  }
+]

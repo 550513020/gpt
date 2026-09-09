@@ -1,0 +1,14 @@
+{
+  "edition": "riverside-20260909-v5",
+  "features": [
+    "mixed-retail",
+    "clear-escalator-landings",
+    "lift-ride",
+    "cloth-advertising",
+    "roof-garden-pitch",
+    "roof-stairs",
+    "unified-sun",
+    "dynamic-rain"
+  ],
+  "externalRuntimeDependencies": 0
+}

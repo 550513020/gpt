@@ -1,71 +1,52 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>滨水商业庭院 · 3D</title>
-  <style>
-    *{box-sizing:border-box} body{margin:0;overflow:hidden;background:#bcd6ea;font-family:system-ui,"Microsoft YaHei",sans-serif;color:#fff}
-    canvas{display:block} #hud{position:fixed;left:22px;top:20px;padding:14px 16px;background:#1b211bd9;border:1px solid #ffffff30;border-radius:10px;backdrop-filter:blur(10px);pointer-events:none}
-    #hud b{display:block;font-size:16px;letter-spacing:.08em} #hud span{display:block;margin-top:6px;font-size:12px;opacity:.8}
-    #reset{position:fixed;right:22px;bottom:22px;border:0;border-radius:8px;background:#f4e8d2;color:#253226;padding:10px 14px;font:inherit;cursor:pointer}
-    #reset:hover{background:#fff7e9} #load{position:fixed;inset:0;display:grid;place-items:center;background:#cfe0ee;color:#26372b;z-index:2;font-size:14px}
-  </style>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#162522">
+  <title>水岸庭院 · 3D 建筑漫游</title>
+  <meta name="description" content="探索双翼弧形建筑、玻璃店铺与开放式庭院。可旋转、缩放，进入珠宝、潮玩、服装、餐厅、影院与扶梯中庭。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23162522'/%3E%3Cpath d='M5 10h8v14H5m14-14h8v14h-8M13 14h6' stroke='%23e4d1a6' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
 </head>
 <body>
-  <div id="load">正在建立庭院场景…</div>
-  <div id="hud"><b>滨水商业庭院</b><span>拖拽旋转 · 滚轮缩放 · 右键平移</span></div>
-  <button id="reset" type="button">复位视角</button>
-  <script type="module">
-    import * as THREE from 'https://esm.sh/three@0.160.1';
-    import { OrbitControls } from 'https://esm.sh/three@0.160.1/examples/jsm/controls/OrbitControls.js';
-
-    const scene=new THREE.Scene(); scene.background=new THREE.Color(0xbdd7ea); scene.fog=new THREE.Fog(0xbdd7ea,28,62);
-    // Model coordinates use architecture convention: X=width, Y=depth, Z=height.
-    // Convert them once into Three.js's Y-up world.
-    const world=new THREE.Group(); world.rotation.x=-Math.PI/2; scene.add(world);
-    const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,120);
-    const startPos=new THREE.Vector3(0,4.2,18), target=new THREE.Vector3(0,3.3,-3); camera.position.copy(startPos);
-    const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(renderer.domElement);
-    const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(target);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.48;controls.minDistance=8;controls.maxDistance=34;
-    const M={ concrete:new THREE.MeshStandardMaterial({color:0xc6baa4,roughness:.82}), wood:new THREE.MeshStandardMaterial({color:0x6b3415,roughness:.45}), oak:new THREE.MeshStandardMaterial({color:0xb87539,roughness:.55}), glass:new THREE.MeshPhysicalMaterial({color:0x3b817a,roughness:.12,metalness:.08,transmission:.22,transparent:true,opacity:.58,side:THREE.DoubleSide}), bronze:new THREE.MeshStandardMaterial({color:0x241208,metalness:.8,roughness:.28}), stone:new THREE.MeshStandardMaterial({color:0x958d7c,roughness:.94}), green:new THREE.MeshStandardMaterial({color:0x17431e,roughness:.9}), leaf:new THREE.MeshStandardMaterial({color:0x2f6d25,roughness:.85}), red:new THREE.MeshStandardMaterial({color:0xa93c12,roughness:.8}), purple:new THREE.MeshStandardMaterial({color:0x9c4d92,roughness:.85}), water:new THREE.MeshPhysicalMaterial({color:0x1b8080,roughness:.06,metalness:.25,transparent:true,opacity:.76}) };
-    const box=(x,y,z,w,d,h,m,bevel=0)=>{const g=new THREE.BoxGeometry(w,d,h,1,1,1);const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;if(bevel){const e=new THREE.EdgesGeometry(g);/* subtle edge */}world.add(o);return o};
-    const cyl=(x,y,z,r,h,m,radial=16)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,radial),m);o.rotation.x=Math.PI/2;o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;world.add(o);return o};
-    const rounded=(x,y,z,w,d,h,r,m)=>{const s=new THREE.Shape();const a=x-w/2,b=y-d/2;s.moveTo(a+r,b);s.lineTo(a+w-r,b);s.quadraticCurveTo(a+w,b,a+w,b+r);s.lineTo(a+w,b+d-r);s.quadraticCurveTo(a+w,b+d,a+w-r,b+d);s.lineTo(a+r,b+d);s.quadraticCurveTo(a,b+d,a,b+d-r);s.lineTo(a,b+r);s.quadraticCurveTo(a,b,a+r,b);const g=new THREE.ExtrudeGeometry(s,{depth:h,bevelEnabled:true,bevelSize:.06,bevelThickness:.06,bevelSegments:2});g.translate(0,0,z-h/2);const o=new THREE.Mesh(g,m);o.castShadow=o.receiveShadow=true;world.add(o);return o};
-    // ground and promenade
-    box(0,1,-.2,36,32,.4,M.stone);box(0,-.6,.035,6.1,27,.09,new THREE.MeshStandardMaterial({color:0xc1b8a5,roughness:1}));
-    for(let y=-12;y<12;y+=4)box(0,y,.09,6.15,.045,.012,M.bronze);
-    // three stacked curving wings
-    for(const z of [3.25,6.45,9.65]){
-      rounded(-8,2,z,12.8,16,.48,1.45,M.concrete); rounded(8,2.8,z,12.8,17.5,.48,1.55,M.concrete);
-      box(-6.0,1.7,z-1.0,7.8,.10,1.72,M.glass); box(6.0,1.8,z-1.0,7.8,.10,1.72,M.glass);
-      box(-7.1,-1.05,z-.29,9.1,3.0,.12,M.oak); box(7.1,-.85,z-.29,9.1,3.2,.12,M.oak);
-      box(-6.0,1.62,z-.54,8.0,.13,.20,new THREE.MeshStandardMaterial({color:0x54b8a7,emissive:0x0c332b,roughness:.3}));
-      box(6.0,1.72,z-.54,8.0,.13,.20,new THREE.MeshStandardMaterial({color:0x54b8a7,emissive:0x0c332b,roughness:.3}));
-    }
-    // ground-level glass frontages and vertical timber screen
-    for(const sign of [-1,1]){const x=sign*6.2;box(x,-2.1,1.55,8.4,.12,3.0,M.glass);box(x,-2.15,3.08,8.55,.35,.36,M.wood);for(let i=-3.7;i<=3.7;i+=.45){box(x+i,-2.22,1.55,.075,.16,3.05,i<-.6?M.oak:M.bronze)}}
-    // distant bridge
-    box(0,8,6.95,10,.85,.25,M.concrete);box(0,8,6.22,9.8,.08,1.15,M.glass);for(let x=-4.6;x<4.7;x+=.55)box(x,7.94,6.25,.035,.09,1.2,M.bronze);
-    // water rill
-    box(-7.1,-8,.05,6.1,2.5,.18,M.bronze);box(-7.1,-8,.17,5.8,2.22,.04,M.water);
-    // furniture
-    function cafe(x,y){cyl(x,y,.75,.38,.07,M.wood);cyl(x,y,.40,.055,.66,M.bronze);cyl(x,y,.08,.24,.055,M.bronze);for(let a=0;a<3;a++){let q=a*Math.PI*2/3+.25,xx=x+Math.cos(q)*.72,yy=y+Math.sin(q)*.72;box(xx,yy,.42,.5,.5,.08,M.oak);box(xx,yy+.13,.72,.5,.08,.5,M.oak)}}
-    [[-7,-4],[-5,-5.2],[5.2,-4.4],[7.5,-5.4],[7.1,1.2]].forEach(p=>cafe(...p));
-    // trees / bushes
-    function tree(x,y,h,spread,material){cyl(x,y,h/2,.18,h,M.wood,10);for(let i=0;i<30;i++){let a=Math.random()*6.283,r=Math.pow(Math.random(),.55)*spread,z=h*.72+(Math.random()-.45)*2;let leaf=new THREE.Mesh(new THREE.DodecahedronGeometry(.68,1),material);leaf.scale.set(1.1,.78,.78);leaf.position.set(x+Math.cos(a)*r,y+Math.sin(a)*r,z);leaf.castShadow=true;world.add(leaf)}}
-    tree(-6,-3.5,7.2,2.8,M.leaf);tree(.5,2.5,4.4,2.2,M.red);tree(5,3.4,3.9,2,M.purple);tree(8.4,5,4.2,2.1,M.leaf);
-    for(const [x,y] of [[-7,-6.8],[-4,-6.6],[-2.4,2.5],[2.7,1.6],[3.9,4.8],[7.3,2.2],[9,6.6]])for(let i=0;i<7;i++){let a=Math.random()*6.283,r=Math.random()*.8;let b=new THREE.Mesh(new THREE.SphereGeometry(.48,10,8),M.green);b.scale.y=.75;b.position.set(x+Math.cos(a)*r,y+Math.sin(a)*r,.35);b.castShadow=true;world.add(b)}
-    // schematic people provide scale
-    function person(x,y,c){cyl(x,y,.44,.10,.88,M.bronze,10);box(x,y,1.28,.42,.28,.75,c);let h=new THREE.Mesh(new THREE.SphereGeometry(.17,12,10),new THREE.MeshStandardMaterial({color:0x8b5035,roughness:.8}));h.position.set(x,y,1.85);h.castShadow=true;world.add(h)}
-    const coral=new THREE.MeshStandardMaterial({color:0xc6453a,roughness:.75});[[-.4,-3.8, M.bronze],[.35,-3.65,coral],[-1.3,2.2,M.bronze],[1.5,1.8,coral],[2.5,.9,M.bronze],[4.3,-2.9,M.bronze],[-4.1,-3,coral]].forEach(p=>person(...p));
-    // lighting
-    scene.add(new THREE.HemisphereLight(0xeaf5ff,0x4d3b1e,2.2));const sun=new THREE.DirectionalLight(0xffe4b5,4.1);sun.position.set(-12,-10,17);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-20;sun.shadow.camera.right=20;sun.shadow.camera.top=20;sun.shadow.camera.bottom=-20;scene.add(sun);
-    const amb=new THREE.PointLight(0xffb96a,20,14,2);amb.position.set(-6,-2,3);scene.add(amb);
-    document.getElementById('reset').onclick=()=>{camera.position.copy(startPos);controls.target.copy(target)};
-    addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-    const tick=()=>{controls.update();renderer.render(scene,camera);requestAnimationFrame(tick)};tick();document.getElementById('load').remove();
-  </script>
+  <main id="experience" aria-label="水岸庭院三维场景">
+    <div id="viewport" aria-label="交互式三维建筑，可用鼠标拖动或触控操作"></div>
+    <div id="loading" role="status"><span class="loading-mark"></span><strong>正在构建水岸庭院</strong><span>建筑 · 玻璃 · 店铺 · 花园</span></div>
+    <header class="topbar">
+      <div class="identity"><div class="monogram" aria-hidden="true"><i></i><i></i><i></i></div><div><span class="eyebrow">RIVERSIDE / SPATIAL STUDY</span><h1>水岸庭院</h1></div><span class="edition">3D 漫游</span></div>
+      <div class="header-actions"><button id="references" class="quiet">参考与效果图</button><button id="fullscreen" class="icon-button" title="全屏查看" aria-label="全屏查看"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+    </header>
+    <aside class="material-panel" aria-label="场景设置">
+      <div class="panel-title"><span>光影与材质</span><button id="panel-toggle" class="mini" aria-expanded="true" aria-label="收起光影与材质">−</button></div>
+      <div id="material-controls">
+        <div class="segmented" aria-label="时间"><button data-light="day" class="selected" aria-pressed="true">晴朗午后</button><button data-light="dusk">暮色</button><button data-light="rain">雨天</button></div>
+        <label class="range-label" for="reflection">玻璃反光 <output id="reflection-value">8%</output></label>
+        <input id="reflection" type="range" min="0" max="100" value="8">
+        <div class="control-line"><label for="interior">室内照明</label><input id="interior" type="checkbox" checked class="switch"></div>
+        <div class="material-note"><span class="material-swatch"></span>弧面玻璃 · 香槟铜 · 木格栅</div>
+      </div>
+    </aside>
+    <aside class="floor-panel" aria-label="楼层与店铺"><label for="store-view">楼层与店铺</label><select id="store-view"><option value="">选择店铺空间</option><optgroup label="1F · 珠宝与潮玩"><option value="jewelry">璟序珠宝</option><option value="toys">MOMO 杂物社</option></optgroup><optgroup label="2F · 服装与包袋"><option value="clothes">叙织服装</option><option value="bags">PELLE 皮具工坊</option></optgroup><optgroup label="3F · 餐饮"><option value="hotpot">山隐铜锅火锅</option><option value="bistro">炉边 BISTRO</option></optgroup><optgroup label="4F · 娱乐"><option value="cinema">光幕电影院</option><option value="ktv">回声 KTV</option></optgroup><optgroup label="RF · 屋顶"><option value="roof">屋顶花园与球场</option><option value="roofstairs">屋顶步行楼梯</option></optgroup></select><span>4 层 · 8 种业态</span><div class="lift-controls"><select id="lift-floor" aria-label="电梯到达楼层"><option value="0">电梯 · 1F</option><option value="1">电梯 · 2F</option><option value="2">电梯 · 3F</option><option value="3">电梯 · 4F</option></select><button id="ride-lift">乘梯</button></div></aside><div class="location"><span class="location-index" id="location-index">01</span><div><div id="view-title">建筑正面</div><span id="view-description">双翼立面与中央通廊</span></div></div>
+    <div class="navigation-wrap">
+      <div class="navigation-label"><span>选择观察位置</span><span id="gesture-hint">拖动旋转 · 滚轮缩放 · 右键平移</span></div>
+      <nav class="views" aria-label="三维观察位置">
+        <button data-view="front" class="active" aria-pressed="true"><span>01</span>建筑正面</button>
+        <button data-view="aerial"><span>02</span>建筑全貌</button>
+        <button data-view="courtyard"><span>03</span>庭院内街</button>
+        <button data-view="atrium"><span>04</span>扶梯中庭</button>
+        <button data-view="jewelry"><span>05</span>珠宝空间</button>
+        <button data-view="toys"><span>06</span>潮玩店铺</button>
+      </nav>
+    </div>
+    <div class="view-tools"><button id="save-image" class="tool" aria-label="保存当前三维画面"><svg viewBox="0 0 24 24"><path d="M4 6h4l2-3h4l2 3h4v14H4z"/><circle cx="12" cy="13" r="4"/></svg><span>保存画面</span></button><button id="walk" class="tool" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M5 20V9l7-5 7 5v11M9 20v-7h6v7"/></svg><span>自由行走</span></button><button id="reset" class="tool" title="返回当前观察位置"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg><span>复位</span></button></div>
+    <div id="walk-help" hidden>拖动环顾 · W A S D 行走 · Q / E 升降 · Esc 退出</div>
+    <div id="walk-pad" hidden aria-label="行走方向"><button data-step="forward" aria-label="前进">↑</button><div><button data-step="left" aria-label="左移">←</button><button data-step="back" aria-label="后退">↓</button><button data-step="right" aria-label="右移">→</button></div></div>
+    <div class="study-note">依据参考图重建的概念模型</div>
+    <div id="notice" role="status" hidden></div>
+    <dialog id="reference-dialog"><div class="dialog-header"><div><span class="eyebrow">REFERENCE / VISUAL DIRECTION</span><h2>参考与效果图</h2></div><button id="close-dialog" class="icon-button" aria-label="关闭">×</button></div><p>三维场景依据三张参考图推定比例与空间。概念效果图用于对照氛围，并非当前网页的实景截图。</p><div class="reference-grid"><figure><img src="./assets/reference-front.jpg" alt="原始建筑正面参考图" loading="lazy"><figcaption>原始参考 · 建筑正面</figcaption></figure><figure><img src="/assets/reference-courtyard.jpg" alt="原始内部庭院参考图" loading="lazy"><figcaption>原始参考 · 庭院内街</figcaption></figure><figure><img src="/assets/reference-atrium.jpg" alt="通高中庭与层叠扶梯参考图" loading="lazy"><figcaption>新增参考 · 扶梯中庭</figcaption></figure><figure><img src="/assets/concept-front.png" alt="无人物建筑正面概念效果图" loading="lazy"><figcaption>概念效果图 · 建筑正面</figcaption></figure><figure><img src="/assets/concept-courtyard.png" alt="无人物精品商业内街概念效果图" loading="lazy"><figcaption>概念效果图 · 庭院内街</figcaption></figure></div></dialog>
+  </main>
+  <script>window.addEventListener('error',()=>{const p=document.getElementById('loading');if(p&&!p.classList.contains('done')){p.innerHTML='<strong>三维场景暂时无法加载</strong><span>请尝试刷新，或使用支持 WebGL 2 的浏览器。</span><button onclick="location.reload()">重新加载</button>';}});</script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
-
