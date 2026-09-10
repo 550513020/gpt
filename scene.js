@@ -1,7 +1,9 @@
 import * as THREE from './vendor/three.module.js';
-import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js';
-import { buildAtrium } from './atrium.js';
-import { buildRooftop } from './rooftop.js';
+import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js?v=6';
+import { buildAtrium } from './atrium.js?v=6';
+import { buildRooftop } from './rooftop.js?v=6';
+import { addAutomaticDoor,updateRetail } from './retail-detail.js?v=6';
+import { addFountain } from './water-features.js?v=6';
 
 // Model coordinates are metres, estimated from the three supplied photographs.
 export const LOCATIONS = {
@@ -17,6 +19,14 @@ export const LOCATIONS = {
   bistro:{eye:[16,11.2,-6],target:[17.5,10.9,3],title:'3F · 炉边餐厅',description:'小圆桌、开放式吧台与餐饮陈列'},
   cinema:{eye:[-16,15.9,-5.7],target:[-16,16.0,5.9],title:'4F · 光幕影院',description:'取票前厅、阶梯座椅与放映厅'},
   ktv:{eye:[16,15.85,-5],target:[20,16.0,3.9],title:'4F · 回声 KTV',description:'独立包厢、沙发与点唱屏幕'},
+  chinese:{eye:[-13.8,11.15,17],target:[-13.8,11.0,28],title:'3F · 青庭中餐',description:'粤式点心、烧味与茶台'},
+  japanese:{eye:[13.8,11.15,17],target:[16,11.0,27],title:'3F · 凪日料',description:'寿司吧、刺身冷柜与天妇罗'},
+  spa:{eye:[-13.8,15.8,17],target:[-13.8,15.7,28],title:'4F · 沐禾足浴',description:'足浴休憩区、茶台与前台'},
+  starktv:{eye:[13.8,15.8,17],target:[18,16,29],title:'4F · 星屿 KTV',description:'后排四层娱乐空间与独立包厢'},
+  gardenjewelry:{eye:[-13.8,1.9,17],target:[-13.8,1.7,28],title:'1F · 石间珠宝',description:'宝石展箱、聚光顶灯与环绕陈列'},
+  gardentoys:{eye:[13.8,1.9,17],target:[13.8,1.7,28],title:'1F · TOY LAB',description:'盲盒、卡牌、手办与生活小物'},
+  travel:{eye:[-13.8,6.55,17],target:[-13.8,6.4,28],title:'2F · NOMA 箱包',description:'旅行箱包、配饰与咨询区'},
+  linen:{eye:[13.8,6.55,17],target:[13.8,6.4,28],title:'2F · LINEN 衣橱',description:'夏日服装、鞋履、试衣间与全身镜'},
   roof:{eye:[30,29,26],target:[2,19.6,0],title:'屋顶花园与球场',description:'空中花园、小型足球练习场与连桥'},
   roofstairs:{eye:[18.5,17.8,18],target:[13.8,16.4,11.4],title:'屋顶步行楼梯',description:'从四层露台经折返楼梯到达屋顶'}
 };
@@ -24,6 +34,8 @@ export const LOCATIONS = {
 export function createArchitecture({maps={}}={}){
   const root=new THREE.Group();root.name='Riverside architecture';
   const glassGroup=new THREE.Group();glassGroup.name='Architectural glass';root.add(glassGroup);
+  const routes=new THREE.Group();routes.name='Customer circulation guides';routes.visible=false;root.add(routes);
+  const runtime={rooms:[],doors:[],spots:[],updates:[],routes};
   const batches=new Map();const stats={storeys:4,retailRooms:0,storeNames:[],storeTypes:[],necklaces:0,handbags:0,toys:0,trees:0};
   let seed=48319;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
   const random=(a,b)=>a+(b-a)*rand();
@@ -103,10 +115,11 @@ export function createArchitecture({maps={}}={}){
   function slab(mat,x,y,z,w,d,r,h){inst(slabGeometry(w,d,r,h),mat,x,y,z);}
   function perimeterSegments(w,d,r,gap){
     const points=shape(w,d,r).getPoints(16),segments=[];
+    const openings=!gap?[]:Array.isArray(gap)?typeof gap[0]==='number'?[{edge:'rear',min:gap[0],max:gap[1]}]:gap:[gap];
     for(let i=0;i<points.length-1;i++){
       const a=points[i],b=points[i+1],cuts=[0,1];
-      if(gap&&Math.abs(a.y-d/2)<.01&&Math.abs(b.y-d/2)<.01&&Math.abs(a.x-b.x)>.01)for(const x of gap){const t=(x-a.x)/(b.x-a.x);if(t>0&&t<1)cuts.push(t);}
-      cuts.sort((a,b)=>a-b);for(let j=0;j<cuts.length-1;j++){const p=a.clone().lerp(b,cuts[j]),q=a.clone().lerp(b,cuts[j+1]),middle=(p.x+q.x)/2;if(gap&&p.y>d/2-.01&&q.y>d/2-.01&&middle>gap[0]&&middle<gap[1])continue;segments.push([p,q]);}
+      for(const opening of openings){const edge=opening.edge==='front'?-d/2:d/2;if(Math.abs(a.y-edge)<.02&&Math.abs(b.y-edge)<.02&&Math.abs(a.x-b.x)>.01)for(const x of [opening.min,opening.max]){const t=(x-a.x)/(b.x-a.x);if(t>0&&t<1)cuts.push(t);}}
+      cuts.sort((a,b)=>a-b);for(let j=0;j<cuts.length-1;j++){const p=a.clone().lerp(b,cuts[j]),q=a.clone().lerp(b,cuts[j+1]),middle=(p.x+q.x)/2;if(openings.some(o=>Math.abs(p.y-(o.edge==='front'?-d/2:d/2))<.02&&Math.abs(q.y-(o.edge==='front'?-d/2:d/2))<.02&&middle>o.min&&middle<o.max))continue;segments.push([p,q]);}
     }
     return segments;
   }
@@ -154,7 +167,9 @@ export function createArchitecture({maps={}}={}){
     stats.retailRooms++;
     const spec=storeFor(cx,Math.round(base/4.65),!main);
     stats.storeNames.push(spec.name);stats.storeTypes.push(spec.type);
-    createRetailRoom({box,slab,inst,sphere,tube,label,root,glassGroup,mats,unitCylinder,unitTorus,bag,bear,necklace,displayCase,vitrine,stats},cx,base,cz,w,d,spec);
+    const api={box,slab,inst,sphere,tube,label,root,glassGroup,mats,unitCylinder,unitTorus,bag,bear,necklace,displayCase,vitrine,glazing,stats,runtime};
+    const room=createRetailRoom(api,cx,base,cz,w,d,spec);
+    if(base===0)addAutomaticDoor(api,room);
   }
   function wing(cx,cz,w=21,d=17,levels=4,secondary=false){
     for(let floor=0;floor<levels;floor++){
@@ -170,24 +185,29 @@ export function createArchitecture({maps={}}={}){
         box(mats.wood,cx+x,base+3.984,cz,.105,.065,reach*2-.12);
       }
       slab(mats.slabTop,cx,base+4.565,cz,w+3.78,d+3.78,3.65,.03);
-      glassPerimeter(cx,base+.21,cz,w,d,2.6,3.72,glazing);
+      const entryGap={edge:'front',min:-1.4,max:1.4};
+      glassPerimeter(cx,base+.21,cz,w,d,2.6,3.72,glazing,entryGap);
+      const transom=new THREE.Mesh(new THREE.PlaneGeometry(2.8,.9),glazing);transom.position.set(cx,base+3.48,cz-d/2);glassGroup.add(transom);
+      for(const dx of [-1.43,1.43])box(mats.bronze,cx+dx,base+1.67,cz-d/2,.05,2.92,.07);
       // Thin horizontal champagne transoms, darker structural columns.
       railPerimeter(cx,base+3.29,cz,w+.02,d+.02,2.6);
-      railPerimeter(cx,base+.2,cz,w+.02,d+.02,2.6);
+      railPerimeter(cx,base+.2,cz,w+.02,d+.02,2.6,entryGap);
       for(let k=-3;k<=3;k++)for(const direction of [-1,1]){
+        if(k===0&&direction===-1)continue;
         const xx=cx+k*(w-5.2)/6,zz=cz+direction*d/2;box(k%3===0?mats.darkMetal:mats.bronze,xx,base+2.17,zz,.07,3.86,.12);
       }
       for(let j=-1;j<=1;j++)for(const direction of [-1,1])box(mats.bronze,cx+direction*w/2,base+2.13,cz+j*(d-4.8)/3,.11,3.84,.065);
       for(const dx of [-w*.31,w*.31]){box(mats.darkMetal,cx+dx,base+2.13,cz-d/2-.2,.34,3.9,.45);box(mats.bronze,cx+dx-.13,base+2.14,cz-d/2-.445,.05,3.92,.025);}
       if(floor>0){
-        const accessGap=!secondary&&cx>0&&floor===3?[-4.45,.4]:null;
+        const connectorX=(cx<0?-20:20)-cx;
+        const accessGap=[{edge:secondary?'front':'rear',min:connectorX-1.13,max:connectorX+1.13}];
+        if(!secondary&&cx>0&&floor===3)accessGap.push({edge:'rear',min:-4.45,max:.4});
         glassPerimeter(cx,base+.06,cz,w+3.1,d+3.1,3.45,1.02,balustrade,accessGap);railPerimeter(cx,base+1.08,cz,w+3.12,d+3.12,3.45,accessGap);railPerimeter(cx,base+.075,cz,w+3.12,d+3.12,3.45,accessGap);
         for(const dx of [-w/2-1.1,w/2+1.1])for(const dz of [-d*.31,d*.31]){box(mats.darkMetal,cx+dx,base+.3,cz+dz,.54,.53,1.2);for(let b=0;b<7;b++)inst(unitIco,mats.leaf,cx+dx+random(-.14,.14),base+.63+random(-.06,.16),cz+dz+random(-.5,.5),random(.2,.34),random(.17,.3),random(.2,.33));}
       }
       const type=secondary?(cx<0?'bags':'jewelry'):(floor===0?(cx<0?'jewelry':'toys'):floor===1?(cx<0?'bags':'jewelry'):floor===2?'bags':'jewelry');
       retail(cx,base,cz,w,d,type,!secondary);
-      // Clear entry doors, small pull handles, and stone thresholds.
-      for(const dx of [-.48,.48])box(mats.gold,cx+dx,base+1.25,cz-d/2-.09,.026,.66,.045);
+      // Entry opening stays clear; ground-floor doors slide behind the side glazing.
     }
   }
 
@@ -197,7 +217,13 @@ export function createArchitecture({maps={}}={}){
   for(let z=-32;z<=57;z+=2.3)box(mats.slabTop,0,-.058,z,89,.004,.012,0,false);
   box(mats.darkMetal,0,-.044,-16,.28,.02,11,0,false);box(mats.water,0,-.025,-16,.18,.02,11,0,false);
   wing(-16,0);wing(16,0);
-  wing(-13.8,24,18.5,16.5,3,true);wing(13.8,24,18.5,16.5,3,true);
+  wing(-13.8,24,18.5,16.5,4,true);wing(13.8,24,18.5,16.5,4,true);
+  for(let f=1;f<=3;f++){
+    const y=f*4.65;
+    for(const x of [-20,20]){box(mats.concrete,x,y-.16,12.2,2.2,.32,4.65);for(const side of [-1,1]){const panel=new THREE.Mesh(new THREE.PlaneGeometry(4.6,1.03),balustrade);panel.rotation.y=Math.PI/2;panel.position.set(x+side*1.06,y+.52,12.2);glassGroup.add(panel);box(mats.bronze,x+side*1.06,y+1.04,12.2,.035,.035,4.6);}}
+    box(mats.concrete,0,y-.16,37.65,3.15,.32,6.4);
+    for(const x of [-1.52,1.52]){const panel=new THREE.Mesh(new THREE.PlaneGeometry(6.4,1.03),balustrade);panel.rotation.y=Math.PI/2;panel.position.set(x,y+.52,37.65);glassGroup.add(panel);box(mats.bronze,x,y+1.04,37.65,.035,.035,6.4);}
+  }
 
   // A sequence of teal portals makes the axial passage genuinely deep.
   for(const z of [-7.65,1.1,10.8,34.5]){
@@ -213,7 +239,7 @@ export function createArchitecture({maps={}}={}){
   // Elevated bridges cross behind the entry portal, not across the ground path.
   for(const z of [8.5,33.6])for(let floor=1;floor<=3;floor++){
     const yy=floor*4.65;box(mats.concrete,0,yy-.3,z,7.3,.5,2.0);box(mats.wood,0,yy-.56,z,6.3,.024,1.75);box(mats.warmGlow,0,yy-.585,z-.85,6.2,.028,.03,0,false);
-    for(const side of [-1,1]){const mesh=new THREE.Mesh(new THREE.PlaneGeometry(6.8,1.03),balustrade);mesh.position.set(0,yy+.49,z+side*.93);glassGroup.add(mesh);box(mats.bronze,0,yy+1.015,z+side*.93,6.83,.035,.025);}
+    for(const side of [-1,1])for(const [a,b] of z>30&&side===1?[[-3.4,-1.58],[1.58,3.4]]:[[-3.4,3.4]]){const mesh=new THREE.Mesh(new THREE.PlaneGeometry(b-a,1.03),balustrade);mesh.position.set((a+b)/2,yy+.49,z+side*.93);glassGroup.add(mesh);box(mats.bronze,(a+b)/2,yy+1.015,z+side*.93,b-a,.035,.025);}
   }
   // The far end contains another retail gallery with a central opening.
   for(const cx of [-11,11]){
@@ -258,11 +284,13 @@ export function createArchitecture({maps={}}={}){
   for(let i=0;i<12;i++){const x=-77+i*14,h=random(7,20);box(std(i%2?'#bac5c3':'#aab9b6',.95),x,h/2,73,random(8,12),h,9);}
   const atrium=buildAtrium({root,box,slab,inst,sphere,tube,glassGroup,mats,balustrade,glazing,unitCylinder,label,tree,rock});
   const roof=buildRooftop({root,box,slab,inst,sphere,tube,glassGroup,mats,balustrade,unitCylinder,unitTorus,label});
+  const fountain=addFountain({root,glassGroup,inst,mats,unitCylinder,unitTorus,runtime});
   stats.escalators=atrium.flights.length;stats.atriumLevels=4;
   for(const batch of batches.values()){
     const mesh=new THREE.InstancedMesh(batch.geo,batch.mat,batch.matrices.length);
     batch.matrices.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.castShadow=batch.cast;mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();root.add(mesh);
   }
   root.updateMatrixWorld(true);
-  return {root,glassGroup,glazing,balustrade,vitrine,mats,emissives,stats,atrium,roof};
+  stats.automaticDoors=runtime.doors.length;stats.cashiers=runtime.rooms.filter(r=>r.checkout).length;stats.fittingRooms=runtime.rooms.reduce((n,r)=>n+r.fittingRooms.length,0);stats.rearStoreys=4;
+  return {root,glassGroup,glazing,balustrade,vitrine,mats,emissives,stats,atrium,roof,runtime,fountain,update:(dt,time,camera,on)=>updateRetail(runtime,dt,time,camera,on)};
 }

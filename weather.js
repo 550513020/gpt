@@ -9,7 +9,7 @@ function roundedRoof(x,z,cx,cz,w,d,r){
 }
 export function rainSurface(x,z){
   for(const cx of [-16,16])if(roundedRoof(x,z,cx,0,25,21,3.7))return 18.8;
-  for(const cx of [-13.8,13.8])if(roundedRoof(x,z,cx,24,22.5,20.5,3.7))return 14.05;
+  for(const cx of [-13.8,13.8])if(roundedRoof(x,z,cx,24,22.5,20.5,3.7))return 18.8;
   if(Math.abs(x)<12.35&&z>40.7&&z<63.3)return 19.05;
   if(Math.abs(x)<4.65&&z>5.9&&z<8.1)return 18.75;
   return -.035;

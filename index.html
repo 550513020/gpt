@@ -6,7 +6,7 @@
   <title>水岸庭院 · 3D 建筑漫游</title>
   <meta name="description" content="探索双翼弧形建筑、玻璃店铺与开放式庭院。可旋转、缩放，进入珠宝、潮玩、服装、餐厅、影院与扶梯中庭。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23162522'/%3E%3Cpath d='M5 10h8v14H5m14-14h8v14h-8M13 14h6' stroke='%23e4d1a6' stroke-width='2' fill='none'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css?v=6">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
 </head>
 <body>
@@ -24,10 +24,10 @@
         <label class="range-label" for="reflection">玻璃反光 <output id="reflection-value">8%</output></label>
         <input id="reflection" type="range" min="0" max="100" value="8">
         <div class="control-line"><label for="interior">室内照明</label><input id="interior" type="checkbox" checked class="switch"></div>
-        <div class="material-note"><span class="material-swatch"></span>弧面玻璃 · 香槟铜 · 木格栅</div>
+        <div class="control-line"><label for="routes">店内参考动线</label><input id="routes" type="checkbox" class="switch"></div><div class="material-note"><span class="material-swatch"></span>弧面玻璃 · 香槟铜 · 木格栅</div>
       </div>
     </aside>
-    <aside class="floor-panel" aria-label="楼层与店铺"><label for="store-view">楼层与店铺</label><select id="store-view"><option value="">选择店铺空间</option><optgroup label="1F · 珠宝与潮玩"><option value="jewelry">璟序珠宝</option><option value="toys">MOMO 杂物社</option></optgroup><optgroup label="2F · 服装与包袋"><option value="clothes">叙织服装</option><option value="bags">PELLE 皮具工坊</option></optgroup><optgroup label="3F · 餐饮"><option value="hotpot">山隐铜锅火锅</option><option value="bistro">炉边 BISTRO</option></optgroup><optgroup label="4F · 娱乐"><option value="cinema">光幕电影院</option><option value="ktv">回声 KTV</option></optgroup><optgroup label="RF · 屋顶"><option value="roof">屋顶花园与球场</option><option value="roofstairs">屋顶步行楼梯</option></optgroup></select><span>4 层 · 8 种业态</span><div class="lift-controls"><select id="lift-floor" aria-label="电梯到达楼层"><option value="0">电梯 · 1F</option><option value="1">电梯 · 2F</option><option value="2">电梯 · 3F</option><option value="3">电梯 · 4F</option></select><button id="ride-lift">乘梯</button></div></aside><div class="location"><span class="location-index" id="location-index">01</span><div><div id="view-title">建筑正面</div><span id="view-description">双翼立面与中央通廊</span></div></div>
+    <aside class="floor-panel" aria-label="楼层与店铺"><label for="store-view">楼层与店铺</label><select id="store-view"><option value="">选择店铺空间</option><optgroup label="1F · 珠宝与潮玩"><option value="jewelry">璟序珠宝</option><option value="toys">MOMO 杂物社</option><option value="gardenjewelry">石间珠宝</option><option value="gardentoys">TOY LAB</option></optgroup><optgroup label="2F · 服装与包袋"><option value="clothes">叙织服装</option><option value="bags">PELLE 皮具工坊</option><option value="travel">NOMA 旅行箱包</option><option value="linen">LINEN 夏日衣橱</option></optgroup><optgroup label="3F · 餐饮"><option value="hotpot">山隐铜锅火锅</option><option value="bistro">炉边西餐厅</option><option value="chinese">青庭中餐厅</option><option value="japanese">凪日料店</option></optgroup><optgroup label="4F · 娱乐"><option value="cinema">光幕电影院</option><option value="ktv">回声 KTV</option><option value="spa">沐禾足浴</option><option value="starktv">星屿 KTV</option></optgroup><optgroup label="RF · 屋顶"><option value="roof">屋顶花园与球场</option><option value="roofstairs">屋顶步行楼梯</option></optgroup></select><span>4 栋 · 4 层 · 16 家店</span><div class="lift-controls"><select id="lift-floor" aria-label="电梯到达楼层"><option value="0">电梯 · 1F</option><option value="1">电梯 · 2F</option><option value="2">电梯 · 3F</option><option value="3">电梯 · 4F</option></select><button id="ride-lift">乘梯</button></div></aside><div class="location"><span class="location-index" id="location-index">01</span><div><div id="view-title">建筑正面</div><span id="view-description">双翼立面与中央通廊</span></div></div>
     <div class="navigation-wrap">
       <div class="navigation-label"><span>选择观察位置</span><span id="gesture-hint">拖动旋转 · 滚轮缩放 · 右键平移</span></div>
       <nav class="views" aria-label="三维观察位置">
@@ -40,13 +40,13 @@
       </nav>
     </div>
     <div class="view-tools"><button id="save-image" class="tool" aria-label="保存当前三维画面"><svg viewBox="0 0 24 24"><path d="M4 6h4l2-3h4l2 3h4v14H4z"/><circle cx="12" cy="13" r="4"/></svg><span>保存画面</span></button><button id="walk" class="tool" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M5 20V9l7-5 7 5v11M9 20v-7h6v7"/></svg><span>自由行走</span></button><button id="reset" class="tool" title="返回当前观察位置"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg><span>复位</span></button></div>
-    <div id="walk-help" hidden>拖动环顾 · W A S D 行走 · Q / E 升降 · Esc 退出</div>
+    <div id="walk-help" hidden>拖动环顾 · WASD 行走 · 靠近一楼入口自动开门 · Q / E 升降</div>
     <div id="walk-pad" hidden aria-label="行走方向"><button data-step="forward" aria-label="前进">↑</button><div><button data-step="left" aria-label="左移">←</button><button data-step="back" aria-label="后退">↓</button><button data-step="right" aria-label="右移">→</button></div></div>
     <div class="study-note">依据参考图重建的概念模型</div>
     <div id="notice" role="status" hidden></div>
-    <dialog id="reference-dialog"><div class="dialog-header"><div><span class="eyebrow">REFERENCE / VISUAL DIRECTION</span><h2>参考与效果图</h2></div><button id="close-dialog" class="icon-button" aria-label="关闭">×</button></div><p>三维场景依据三张参考图推定比例与空间。概念效果图用于对照氛围，并非当前网页的实景截图。</p><div class="reference-grid"><figure><img src="./assets/reference-front.jpg" alt="原始建筑正面参考图" loading="lazy"><figcaption>原始参考 · 建筑正面</figcaption></figure><figure><img src="/assets/reference-courtyard.jpg" alt="原始内部庭院参考图" loading="lazy"><figcaption>原始参考 · 庭院内街</figcaption></figure><figure><img src="/assets/reference-atrium.jpg" alt="通高中庭与层叠扶梯参考图" loading="lazy"><figcaption>新增参考 · 扶梯中庭</figcaption></figure><figure><img src="/assets/concept-front.png" alt="无人物建筑正面概念效果图" loading="lazy"><figcaption>概念效果图 · 建筑正面</figcaption></figure><figure><img src="/assets/concept-courtyard.png" alt="无人物精品商业内街概念效果图" loading="lazy"><figcaption>概念效果图 · 庭院内街</figcaption></figure></div></dialog>
+    <dialog id="reference-dialog"><div class="dialog-header"><div><span class="eyebrow">REFERENCE / VISUAL DIRECTION</span><h2>参考与效果图</h2></div><button id="close-dialog" class="icon-button" aria-label="关闭">×</button></div><p>三维场景依据三张参考图推定比例与空间。概念效果图用于对照氛围，并非当前网页的实景截图。</p><div class="reference-grid"><figure><img src="./assets/reference-front.jpg" alt="原始建筑正面参考图" loading="lazy"><figcaption>原始参考 · 建筑正面</figcaption></figure><figure><img src="./assets/reference-courtyard.jpg" alt="原始内部庭院参考图" loading="lazy"><figcaption>原始参考 · 庭院内街</figcaption></figure><figure><img src="./assets/reference-atrium.jpg" alt="通高中庭与层叠扶梯参考图" loading="lazy"><figcaption>新增参考 · 扶梯中庭</figcaption></figure><figure><img src="./assets/concept-front.png" alt="无人物建筑正面概念效果图" loading="lazy"><figcaption>概念效果图 · 建筑正面</figcaption></figure><figure><img src="./assets/concept-courtyard.png" alt="无人物精品商业内街概念效果图" loading="lazy"><figcaption>概念效果图 · 庭院内街</figcaption></figure></div></dialog>
   </main>
   <script>window.addEventListener('error',()=>{const p=document.getElementById('loading');if(p&&!p.classList.contains('done')){p.innerHTML='<strong>三维场景暂时无法加载</strong><span>请尝试刷新，或使用支持 WebGL 2 的浏览器。</span><button onclick="location.reload()">重新加载</button>';}});</script>
-  <script type="module" src="/app.js"></script>
+  <script type="module" src="./app.js?v=6"></script>
 </body>
 </html>

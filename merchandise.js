@@ -13,7 +13,25 @@ export function createMerchandise(api){
     add(kind);const color=inks[index%inks.length];
     if(kind==='plush'){bear(x,y,z,s,index);return;}
     if(kind==='necklace'){necklace(x,y,z,s);return;}
-    if(kind==='blindbox'){
+    if(['tote','crossbody','backpack','suitcase','wallet','scarf','sunglasses','sandals','sneakers'].includes(kind)){
+      const leather=[M.tan,M.cream,M.black,M.pink][index%4];
+      if(kind==='scarf'){box(color,x,y+.045*s,z,.67*s,.07*s,.49*s);for(let k=0;k<7;k++)box(M.ivory,x+(k-3)*.075*s,y+.083*s,z,.018*s,.006*s,.46*s);}
+      else if(kind==='sunglasses'){for(const dx of [-.105,.105]){ring(x+dx*s,y+.055*s,z,.074*s,M.gold);sphere(M.black,x+dx*s,y+.054*s,z,.07*s,.008*s,.055*s);}box(M.gold,x,y+.059*s,z,.09*s,.009*s,.013*s);}
+      else if(kind==='sandals'||kind==='sneakers')for(const dx of [-.14,.14]){
+        sphere(M.ivory,x+dx*s,y+.04*s,z,.11*s,.04*s,.25*s);
+        if(kind==='sneakers'){sphere(color,x+dx*s,y+.11*s,z,.095*s,.095*s,.22*s);for(let j=0;j<4;j++)box(M.ivory,x+dx*s,y+.193*s,z+(j-1.5)*.04*s,.12*s,.01*s,.012*s);}
+        else{for(const dz of [-.12,.06])box(leather,x+dx*s,y+.09*s,z+dz*s,.2*s,.065*s,.055*s);}
+      }else{
+        const dim=kind==='suitcase'?[.53,.88,.31]:kind==='wallet'?[.32,.18,.07]:kind==='tote'?[.66,.53,.23]:kind==='backpack'?[.44,.58,.25]:[.47,.32,.16];
+        box(leather,x,y+dim[1]*s/2+.04*s,z,dim[0]*s,dim[1]*s,dim[2]*s);
+        box(M.bronze,x,y+dim[1]*.8*s,z-dim[2]*s/2-.007*s,dim[0]*.85*s,.014*s,.015*s);
+        box(M.gold,x,y+dim[1]*.54*s,z-dim[2]*s/2-.02*s,.05*s,.044*s,.014*s);
+        if(kind!=='wallet')ring(x,y+(dim[1]+.14)*s,z,.145*s,M.bronze,true);
+        if(kind==='crossbody')inst(T,leather,x,y+.5*s,z,.29*s,.34*s,.29*s);
+        if(kind==='backpack')box(leather,x,y+.24*s,z-.17*s,.3*s,.2*s,.1*s);
+        if(kind==='suitcase'){for(const dx of [-.22,.22])sphere(M.black,x+dx*s,y+.018*s,z,.041*s);for(let j=0;j<7;j++)box(M.bronze,x+(j-3)*.06*s,y+.45*s,z-.16*s,.008*s,.69*s,.008*s);}
+      }
+    }else if(kind==='blindbox'){
       box(color,x,y+.2*s,z,.31*s,.4*s,.29*s);box(ivory,x,y+.2*s,z-.151*s,.23*s,.25*s,.009*s);
       sphere(index%2?M.pink:M.teal,x,y+.22*s,z-.166*s,.062*s,.066*s,.009*s);
       for(const dx of [-.05,.05])sphere(M.darkMetal,x+dx*s,y+.24*s,z-.179*s,.01*s);
@@ -56,7 +74,16 @@ export function createMerchandise(api){
   }
   function food(kind,x,y,z,s=1){
     add(kind);inst(C,M.ivory,x,y,z,.24*s,.026*s,.24*s);
-    if(kind==='beef')for(let j=0;j<5;j++){
+    if(['sushi','sashimi','tempura','dumplings','roastduck','steak','pasta','salad'].includes(kind)){
+      if(kind==='sushi')for(let j=0;j<4;j++){const xx=x+(j%2-.5)*.2*s,zz=z+(Math.floor(j/2)-.5)*.18*s;box(ivory,xx,y+.055*s,zz,.14*s,.07*s,.11*s);box(salmon,xx,y+.1*s,zz,.16*s,.035*s,.12*s);}
+      if(kind==='sashimi')for(let j=0;j<5;j++)box(j%2?salmon:beef,x+(j-2)*.07*s,y+.05*s,z,.045*s,.06*s,.25*s);
+      if(kind==='tempura')for(let j=0;j<4;j++)sphere(M.gold,x+(j-1.5)*.09*s,y+.06*s,z,.042*s,.048*s,.17*s);
+      if(kind==='dumplings')for(let j=0;j<5;j++){const a=j*1.25;sphere(ivory,x+Math.sin(a)*.14*s,y+.06*s,z+Math.cos(a)*.14*s,.075*s,.06*s,.045*s);}
+      if(kind==='roastduck')for(let j=0;j<6;j++)box(M.tan,x+(j-2.5)*.065*s,y+.06*s,z,.045*s,.05*s,.22*s);
+      if(kind==='steak'){sphere(beef,x,y+.06*s,z,.18*s,.045*s,.13*s);for(let j=0;j<5;j++)box(M.darkMetal,x+(j-2)*.05*s,y+.105*s,z,.009*s,.006*s,.21*s);}
+      if(kind==='pasta')for(let j=0;j<12;j++)ring(x+Math.sin(j*2.4)*.09*s,y+(.027+j*.004)*s,z+Math.cos(j*2.4)*.09*s,.07*s,M.gold);
+      if(kind==='salad')for(let j=0;j<10;j++)sphere(j%3?M.leafLight:M.coral,x+Math.sin(j*2.4)*.14*s,y+.05*s,z+Math.cos(j*2.4)*.14*s,.065*s,.028*s,.05*s);
+    }else if(kind==='beef')for(let j=0;j<5;j++){
       const xx=x+(j%3-1)*.105*s,zz=z+(Math.floor(j/3)-.5)*.13*s;
       inst(C,beef,xx,y+.062*s,zz,.053*s,.1*s,.053*s,0,0,Math.PI/2);ring(xx-.055*s,y+.062*s,zz,.038*s,ivory,true);
       box(ivory,xx,y+.112*s,zz,.09*s,.009*s,.016*s);

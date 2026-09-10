@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import { Sky } from 'three/addons/Sky.js';
-import { createArchitecture, LOCATIONS } from './scene.js';
-import { stairWalkingHeight } from './atrium.js';
-import { loadSurfaceMaps } from './materials.js';
-import { createLightingPipeline } from './lighting.js';
-import { circulationHeight } from './circulation.js';
-import { enhanceSky,createWeather,sunDirection } from './weather.js';
+import { createArchitecture, LOCATIONS } from './scene.js?v=6';
+import { stairWalkingHeight } from './atrium.js?v=6';
+import { loadSurfaceMaps } from './materials.js?v=6';
+import { createLightingPipeline } from './lighting.js?v=6';
+import { circulationHeight } from './circulation.js?v=6';
+import { enhanceSky,createWeather,sunDirection } from './weather.js?v=6';
+import { shopBlocks } from './shop-routes.js?v=6';
 
 const $=id=>document.getElementById(id);
 const container=$('viewport');
@@ -72,11 +73,7 @@ function setWalk(enabled){
 }
 function isBlocked(x,z){
   const lift=model.atrium.lift;if(Math.abs(x-lift.x)<1.2&&Math.abs(z-lift.z)<1.22&&Math.abs(camera.position.y-(lift.cabin.position.y+1.7))>.7)return true;
-  // Outer walls are passable only at the front doors. Room presets place visitors inside.
-  for(const cx of [-16,16]){
-    const ax=Math.abs(x-cx);if(ax<10.5&&Math.abs(z)<8.5){const prevInside=Math.abs(camera.position.x-cx)<10.5&&Math.abs(camera.position.z)<8.5;if(!prevInside&&!(Math.abs(x-cx)<1.25&&z< -7.8))return true;}
-  }
-  return false;
+  return shopBlocks(model,camera.position,x,z);
 }
 function stepWalk(dt){
   camera.rotation.order='YXZ';camera.rotation.set(lookPitch,lookYaw,0);
@@ -95,6 +92,7 @@ document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',(
 document.querySelectorAll('[data-light]').forEach(b=>b.addEventListener('click',()=>setLight(b.dataset.light)));
 $('reflection').addEventListener('input',e=>{reflectivity=e.target.value/100;$('reflection-value').value=e.target.value+'%';updateReflection();});
 $('interior').addEventListener('change',e=>setInterior(e.target.checked));
+$('routes').addEventListener('change',e=>model.runtime.routes.visible=e.target.checked);
 $('reset').addEventListener('click',()=>setView(currentView));$('walk').addEventListener('click',()=>setWalk(!walk));
 $('save-image').addEventListener('click',()=>{
   composer.render();
@@ -124,9 +122,9 @@ function animate(time){
   const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;
   if(!$('reference-dialog').open){if(transition){const t=THREE.MathUtils.clamp((time-transition.start)/1700,0,1);const ease=t*t*(3-2*t);camera.position.lerpVectors(transition.from,transition.to,ease);controls.target.lerpVectors(transition.fromTarget,transition.toTarget,ease);if(t===1)transition=null;}
     if(ride){const t=THREE.MathUtils.clamp((time-ride.start)/ride.duration,0,1),travel=THREE.MathUtils.clamp((t-.12)/.76,0,1),ease=travel*travel*(3-2*travel),y=THREE.MathUtils.lerp(ride.from,ride.to,ease),lift=model.atrium.lift;lift.cabin.position.y=lift.cabinGlass.position.y=y+.04;const open=t<.12?1-t/.12:t>.88?(t-.88)/.12:0;lift.doors.forEach((door,i)=>door.position.x=(i?1:-1)*(.44+open*.78));lift.landingDoors.forEach((pair,f)=>pair.forEach((door,i)=>door.position.x=lift.x+(i?1:-1)*(.44+((t<.12&&f===ride.fromFloor)||(t>.88&&f===ride.floor)?open:0)*.78)));camera.position.set(lift.x,y+1.73,lift.z-.12);controls.target.set(lift.x,y+1.7,lift.z-6);camera.lookAt(controls.target);if(t===1){ride=null;controls.enabled=true;}}
-    if(walk)stepWalk(dt);else if(!ride)controls.update();weather.tick(dt,time/1000);composer.render(dt);}
+    if(walk)stepWalk(dt);else if(!ride)controls.update();model.update(dt,time/1000,camera,interiorOn);weather.tick(dt,time/1000);composer.render(dt);}
   requestAnimationFrame(animate);
 }
-renderer.compile(scene,camera);composer.render();$('loading').classList.add('done');setTimeout(()=>$('loading').hidden=true,700);requestAnimationFrame(animate);
+model.update(0,0,camera,true);renderer.compile(scene,camera);composer.render();$('loading').classList.add('done');setTimeout(()=>$('loading').hidden=true,700);requestAnimationFrame(animate);
 // Expose only a compact scene summary, useful for troubleshooting a user report.
 window.riversideScene={stats:model.stats,threeVersion:THREE.REVISION,materialMaps:surfaces.loaded,contactShadows:true,skyLightPaths:weather.lightPaths};

@@ -1,5 +1,5 @@
 {
-  "edition": "riverside-20260909-v5",
+  "edition": "riverside-20260910-v6",
   "features": [
     "mixed-retail",
     "clear-escalator-landings",
@@ -8,7 +8,16 @@
     "roof-garden-pitch",
     "roof-stairs",
     "unified-sun",
-    "dynamic-rain"
+    "dynamic-rain",
+    "automatic handle-free sliding doors",
+    "16 cashiers and furniture-aware circulation",
+    "summer fitting rooms and planar mirrors",
+    "secure display cases and ceiling spotlights",
+    "four distinct cuisines and live seafood tank",
+    "four storeys on all four wings",
+    "large cinema screen",
+    "animated atrium fountain"
   ],
-  "externalRuntimeDependencies": 0
+  "externalRuntimeDependencies": 0,
+  "updatedAt": "2026-09-10T01:14:37.877Z"
 }
