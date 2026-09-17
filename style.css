@@ -63,3 +63,6 @@ body.app-mobile:not(.menu-open) #scene-menu{display:none}.app-mobile .navigation
 
 /* Context actions remain small and reachable in both orientations. */
 #context-actions{position:absolute;right:30px;bottom:240px;display:flex;gap:8px;z-index:10}#context-actions button{background:#263c34ef;border:1px solid #d6c39965;border-radius:8px;padding:11px 14px;font-size:12px;color:#eddbb5}.app-mobile #context-actions{right:14px;bottom:165px}.menu-open #context-actions{display:none}@media(orientation:landscape){.app-mobile #context-actions{right:14px;bottom:130px}}
+
+#journey-recenter{position:fixed;top:max(24px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:35;padding:11px 17px;border:1px solid #ddd4bd88;border-radius:24px;background:#172b27e8;color:#fff3d8;box-shadow:0 4px 20px #0002;cursor:pointer;font:inherit;backdrop-filter:blur(10px)}
+#journey-recenter[hidden]{display:none}#journey-recenter span{margin-left:7px;font-size:11px;opacity:.55}#journey-recenter:hover{background:#315249}#journey-recenter:focus-visible{outline:2px solid #f1d399;outline-offset:3px}@media(max-width:600px){#journey-recenter{top:max(66px,env(safe-area-inset-top));padding:9px 14px;font-size:13px}#journey-recenter span{display:none}}

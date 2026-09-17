@@ -35,6 +35,16 @@ export function createRetailDetails(api,room){
     box(M.darkMetal,x-.35,base+1.29,z,.09,.27,.09);box(M.black,x-.35,base+1.48,z,.5,.34,.045);
     box(M.teal,x-.35,base+1.48,z-.027,.43,.26,.008);box(M.black,x+.55,base+1.21,z-.2,.22,.075,.28);
     box(M.ivory,x+.76,base+1.2,z+.15,.25,.09,.2);label('收银 · CASHIER',x,base+.78,z-.536,1.8,Math.PI,spec.accent,'#fff0d1');
+    if(spec.type==='bakery'){
+      box(M.coral,x,base+.73,z-.553,2.27,.73,.025);
+      label('收银 / CASHIER',x,base+.81,z-.58,2.05,Math.PI,'#8c3b32','#fff0d1');
+      label('点单 · 付款 · 取餐',x,base+2.35,z+.4,2.7,Math.PI,'#8c3b32','#fff0d1');
+      box(M.black,x-.35,base+1.68,z,.63,.43,.07);box(M.teal,x-.35,base+1.68,z-.04,.54,.34,.014);
+      label('麦屿收银',x-.35,base+1.68,z-.052,.48,Math.PI,'#244b42','#fff0d1');
+      box(M.ivory,x+.56,base+1.32,z-.2,.27,.15,.28);box(M.cream,x+.56,base+1.42,z-.28,.12,.1,.008);
+      for(let j=0;j<3;j++){box(M.tan,x+.5+j*.18,base+1.34,z+.28,.12,.34,.18);}
+      room.bakery.cashier={x,z,posTerminal:true,receiptPrinter:true,paperBags:3};
+    }
     room.checkout={x,z,width:2.4,depth:1.1,queue:{x:x-side*2,z}};
     return room.checkout;
   }
@@ -81,6 +91,6 @@ export function updateRetail(runtime,dt,time,camera,interiorOn){
   }
   // Four real ceiling spots follow the nearest boutique; all other fixtures remain visible.
   const nearest=runtime.spots.filter(s=>Math.abs(camera.position.y-s.room.base-1.8)<4).sort((a,b)=>a.light.position.distanceToSquared(camera.position)-b.light.position.distanceToSquared(camera.position)).slice(0,4);
-  for(const s of runtime.spots){const on=interiorOn&&nearest.includes(s)&&s.light.position.distanceTo(camera.position)<24;s.light.intensity=on?s.power:0;s.light.visible=on;s.cone.visible=on;}
+  for(const s of runtime.spots){const on=interiorOn&&nearest.includes(s)&&s.light.position.distanceTo(camera.position)<24;s.light.intensity=on?s.power*(s.daylightScale??1):0;s.light.visible=on;s.cone.visible=on;}
   for(const update of runtime.updates){if(update.position){const visible=update.position.distanceTo(camera.position)<(runtime.animationRadius||45);for(const g of update.groups||[])g.visible=visible;if(!visible)continue;}update(dt,time,camera);}
 }

@@ -1,15 +1,15 @@
-import { refineRoof } from './venue-immersion.js?v=11';
-import { buildSpatialBatches } from './performance.js?v=11';
-import { buildParking,perforatedSlab,SHAFTS,VEHICLE_RAMP } from './parking.js?v=11';
+import { refineRoof } from './venue-immersion.js?v=13';
+import { buildSpatialBatches } from './performance.js?v=13';
+import { buildParking,perforatedSlab,SHAFTS,VEHICLE_RAMP } from './parking.js?v=13';
 import * as THREE from './vendor/three.module.js';
-import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js?v=11';
-import { buildAtrium } from './atrium.js?v=11';
-import { buildRooftop } from './rooftop.js?v=11';
-import { addAutomaticDoor,updateRetail } from './retail-detail.js?v=11';
-import { addFountain } from './water-features.js?v=11';
-import { addMallServices } from './mall-services.js?v=11';
-import { buildExpressLift } from './express-lift.js?v=11';
-import { buildAirTerraces } from './air-terraces.js?v=11';
+import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js?v=13';
+import { buildAtrium } from './atrium.js?v=13';
+import { buildRooftop } from './rooftop.js?v=13';
+import { addAutomaticDoor,updateRetail } from './retail-detail.js?v=13';
+import { addFountain } from './water-features.js?v=13';
+import { addMallServices } from './mall-services.js?v=13';
+import { buildExpressLift } from './express-lift.js?v=13';
+import { buildAirTerraces } from './air-terraces.js?v=13';
 
 // Model coordinates are metres, estimated from the three supplied photographs.
 export const LOCATIONS = {
@@ -23,7 +23,7 @@ export const LOCATIONS = {
   bags:{eye:[16,6.6,-4.8],target:[16,6.4,3],title:'2F · PELLE 皮具',description:'皮具展示台与休憩洽谈区'},
   hotpot:{eye:[-16,11.2,-6.7],target:[-16,10.9,2.9],title:'3F · 山隐火锅',description:'铜锅餐桌、木饰面与排烟装置'},
   bakery:{eye:[16,11,-5.9],target:[18,10.8,4.9],title:'3F · 麦屿面包店',description:'环形选购、现烤岛台、冷藏甜点与咖啡座'},
-  cinema:{eye:[9.45,15.65,23],target:[9.45,16.14,31.05],title:'4F · 光幕影院',description:'A / B 双厅、独立通道、入场灯与暗场放映'},
+  cinema:{eye:[9.45,17,23],target:[9.45,16.45,31.05],title:'4F · 光幕影院',description:'A / B 双厅、独立通道、入场灯与暗场放映'},
   ktv:{eye:[16,15.85,-5],target:[20,16.0,3.9],title:'4F · 回声 KTV',description:'独立包厢、沙发与点唱屏幕'},
   chinese:{eye:[-13.8,11.15,17],target:[-13.8,11.0,28],title:'3F · 青庭中餐',description:'粤式点心、烧味与茶台'},
   japanese:{eye:[13.8,11.15,17],target:[16,11.0,27],title:'3F · 凪日料',description:'寿司吧、刺身冷柜与天妇罗'},

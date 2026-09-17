@@ -1,5 +1,5 @@
 {
-  "edition": "2026-09-17-v11",
+  "edition": "2026-09-17-v13",
   "entries": [
     "mobile.html",
     "desktop.html"
@@ -13,11 +13,19 @@
     "east-west-escalators-to-RF",
     "parking-drive-exit",
     "variable-rain",
-    "glass-rain-streaks",
     "48-cinema-armchairs",
     "separate-recent-film-posters",
     "hover-helicopter-pilot-tether",
     "yellow-powerbank-slots",
-    "right-cafe-umbrellas"
+    "right-cafe-umbrellas",
+    "bakery-seven-pastries",
+    "visible-cashier-and-freezer",
+    "niulai-odyssey-posters",
+    "raked-cinema-navigation",
+    "outer-escalator-circulation",
+    "level-forward-tour-camera",
+    "smooth-heading-and-recenter",
+    "daylight-balanced-shop-lighting",
+    "sparse-stationary-rain-beads"
   ]
 }

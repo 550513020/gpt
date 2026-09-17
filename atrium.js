@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
-import { buildCirculation } from './circulation.js?v=11';
-import { addClothBanners } from './banners.js?v=11';
-import { perforatedSlab } from './parking.js?v=11';
+import { buildCirculation } from './circulation.js?v=13';
+import { addClothBanners } from './banners.js?v=13';
+import { perforatedSlab } from './parking.js?v=13';
 
 // This hall extends the open street at its rear. Every landing joins a gallery.
 export function buildAtrium(api){

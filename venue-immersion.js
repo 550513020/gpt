@@ -1,5 +1,8 @@
 import * as THREE from './vendor/three.module.js';
-import {createCinemaDetails,buildPowerBankCabinet} from './venue-details.js?v=11';
+import {createCinemaDetails,buildPowerBankCabinet} from './venue-details.js?v=13';
+
+import {createPatisserie} from './patisserie.js?v=13';
+import {ROW_RISES,cinemaRakeSections,buildCinemaRake} from './cinema-rake.js?v=13';
 
 export function refineBakery(api,room){
   const {box,slab,inst,sphere,tube,label,root,glassGroup,vitrine,mats:M,unitCylinder:C}=api,{cx,cz,base:y}=room;
@@ -8,23 +11,28 @@ export function refineBakery(api,room){
   room.menu.push('cookie','macaron','canele','tart','pretzel');room.bakery.photoStair=true;room.bakery.trays=true;
   function glass(x,z,w,d,yy=y+1.4,h=.6){const p=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),vitrine);p.position.set(x,yy,z);glassGroup.add(p);}
   for(const side of [-1,1]){glass(cx+side*3.1,cz-.3,1.34,4.75);glass(cx+side*3.8,cz+2,2.72,1.2);box(red,cx+side*3.1,y+.68,cz-2.72,1.3,.48,.025);}
-  // A chilled chest with sliding glass lids, separate from the tall cold display.
-  slab(red,cx-4.8,y+.12,cz+5.85,2.6,1.1,.15,.79);glass(cx-4.8,cz+5.85,2.62,1.12,y+1.04,.19);
-  box(M.bronze,cx-4.8,y+1.15,cz+5.85,.04,.04,1.1);
-  for(let j=0;j<5;j++)inst(C,flavors[j%4],cx-5.75+j*.47,y+.97,cz+5.85,.18,.13,.3);
-  label('冰淇淋 / 冷藏蛋糕',cx-4.8,y+.66,cz+5.28,2.35,Math.PI,'#8c3b32','#f8dfaf');
-  // Lower glass counter: four flavours of macarons, chocolate cookies and canelés.
-  slab(red,cx+4.5,y+.1,cz-5.1,2.5,1.1,.18,.9);glass(cx+4.5,cz-5.1,2.48,1.08,y+1.37,.65);
-  for(let j=0;j<20;j++){
-    const x=cx+3.57+(j%5)*.46,z=cz-5.43+Math.floor(j/5)*.22,mat=flavors[j%4];
-    inst(C,mat,x,y+1.10,z,.135,.055,.135);inst(C,M.cream,x,y+1.145,z,.13,.036,.13);inst(C,mat,x,y+1.186,z,.135,.055,.135);
+  const {pastry}=createPatisserie(api,room);
+  // An actual open well, with a recessed interior and two thin sliding lids.
+  const fx=cx-4.8,fz=cz+5.85;
+  box(red,fx,y+.38,fz,2.6,.52,1.1);box(M.ivory,fx,y+.66,fz,2.44,.055,.95);
+  for(const dx of [-1.25,1.25])box(red,fx+dx,y+.92,fz,.1,.56,1.1);
+  for(const dz of [-.5,.5])box(red,fx,y+.92,fz+dz,2.4,.56,.1);
+  for(let j=0;j<5;j++){
+    const xx=fx-1+j*.5;box(M.ivory,xx,y+.84,fz,.43,.29,.75);
+    box(flavors[j%4],xx,y+1.00,fz,.38,.03,.69);
+    for(let k=0;k<3;k++)sphere(flavors[j%4],xx,y+1.035,fz+(k-1)*.19,.15,.028,.082);
   }
+  for(const dx of [-.61,.61]){glass(fx+dx,fz,1.2,.93,y+1.225,.025);box(M.bronze,fx+dx,y+1.25,fz-.34,.23,.024,.026);}
+  box(M.bronze,fx,y+1.23,fz,.035,.035,1.05);
+  label('滑盖冰柜 · GELATO −18°C',fx,y+.82,fz-.56,2.3,Math.PI,'#8c3b32','#f8dfaf');
+  label('冰淇淋 · 冷冻甜品',fx,y+2.0,fz+.5,2.5,Math.PI,'#8c3b32','#fff2d7');
+  room.bakery.freezer={x:fx,z:fz,slidingLids:2,flavors:5};
+  // The entry glass case is exclusively macarons; the islands carry other pastries.
+  box(red,cx+4.5,y+.55,cz-5.1,2.5,.9,1.1);glass(cx+4.5,cz-5.1,2.48,1.08,y+1.38,.65);
+  box(M.marble,cx+4.5,y+1.025,cz-5.1,2.5,.04,1.1);
+  for(let j=0;j<12;j++)pastry('macaron',cx+3.6+(j%4)*.6,y+1.06,cz-5.45+Math.floor(j/4)*.35,j);
   label('MACARON · 四色马卡龙',cx+4.5,y+.65,cz-5.67,2.3,Math.PI,'#8c3b32','#ffe8ba');
-  for(let j=0;j<18;j++){
-    const x=cx+3.1+(j%3-1)*.31,z=cz-1.8+Math.floor(j/3)*.45;
-    inst(C,cream,x,y+1.2,z,.115,.04,.115);for(let k=0;k<4;k++)sphere(chocolate,x+Math.cos(k*2.4)*.064,y+1.23,z+Math.sin(k*2.4)*.064,.023,.014,.024);
-    if(j%3===0){inst(C,chocolate,cx-3.1,y+1.24,z,.1,.18,.1);inst(C,cream,cx-3.1,y+1.34,z,.095,.03,.095);}
-  }
+  room.bakery.glassCases=['macarons','mixed-patisserie','chilled-cakes'];
   // Customer tray / tong station beside the entry, with a separate tasting board.
   slab(M.wood,cx+2.45,y+.1,cz-6.8,1.35,.72,.12,.84);
   for(let j=0;j<7;j++){slab(M.walnut,cx+2.2,y+.99+j*.026,cz-6.8,.67,.45,.045,.022);box(M.bronze,cx+2.86,y+1.01+j*.025,cz-6.8,.025,.022,.34,.2);}
@@ -54,7 +62,7 @@ export function buildTwinCinema(api,room,chair,screen,accent){
   const details=createCinemaDetails(api,room);
   const black=new THREE.MeshBasicMaterial({color:'#080a0d'}),wallpaper=new THREE.MeshStandardMaterial({color:'#665366',roughness:.95}),strip=new THREE.MeshBasicMaterial({color:'#56674b'});
   const zFront=cz-d/2+.32,back=cz+d/2-1.1,split=cz-4.7;
-  room.darkAuditorium=true;room.cinemaSeats=[];room.cinema={mode:'auto',level:1,halls:[],inside:false,lastPosition:new THREE.Vector3(),still:0};
+  room.darkAuditorium=true;room.cinemaSeats=[];room.cinema={mode:'auto',level:1,halls:[],rake:cinemaRakeSections(cz),inside:false,lastPosition:new THREE.Vector3(),still:0};
   function wall(x,z,width,depth,outerFace){
     const materials=Array(6).fill(black);if(outerFace!==undefined)materials[outerFace]=wallpaper;
     const mesh=new THREE.Mesh(new THREE.BoxGeometry(width,3.88,depth),materials);mesh.position.set(x,y+1.99,z);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);room.blockers.push({x,z,w:width,d:depth});
@@ -69,11 +77,13 @@ export function buildTwinCinema(api,room,chair,screen,accent){
     // Entry wall has a 1.8 m doorway, followed by a baffle with passages on both sides.
     for(const dx of [-2.6,2.6])wall(x+dx,split,3.4,.2,5);
     wall(x,split+1.15,2.45,.2);label(side<0?'A 厅  ←':'B 厅  →',x,y+2.5,split-.12,2.1,Math.PI,'#584454','#efdab6');
-    screen('《牛来》\nLUMEN CINEMA',x,y+2.1,back,7.35,2.95,'#17202b','#e9cba0');
+    const film=details.films[side<0?0:1];
+    buildCinemaRake(api,room,x);
+    screen('《'+film.title+'》\nLUMEN CINEMA',x,y+2.5,back,7.35,2.5,'#17202b','#e9cba0',film);
     for(let row=0;row<4;row++){
       const z=cz-1.1+row*1.6;
-      for(const [col,dx] of [-2.98,-2.13,-1.28,1.28,2.13,2.98].entries())details.seat(x+dx,y+.08,z,4-row,col+1,side<0?'A':'B');
-      for(const dx of [-3.78,-.69,.69,3.78])box(strip,x+dx,y+.14,z,.035,.016,1.3,0,false);
+      for(const [col,dx] of [-2.98,-2.13,-1.28,1.28,2.13,2.98].entries())details.seat(x+dx,y+.08+ROW_RISES[row],z,4-row,col+1,side<0?'A':'B');
+      for(const dx of [-3.78,-.69,.69,3.78])box(strip,x+dx,y+.14+ROW_RISES[row],z,.035,.016,1.3,0,false);
     }
     for(const z of [cz-1.9,cz+3.4]){
       const mat=new THREE.MeshBasicMaterial({color:'#ffe6bb'}),lamp=new THREE.Mesh(new THREE.BoxGeometry(2.3,.045,.36),mat);lamp.position.set(x,y+3.78,z);root.add(lamp);lamps.push(lamp);
@@ -82,13 +92,12 @@ export function buildTwinCinema(api,room,chair,screen,accent){
       const light=new THREE.PointLight('#ffdfac',65,10,2);light.position.set(x,y+3.45,z);lights.push(light);
     }
     label('EXIT · 入场通道',x-3.48,y+2.6,split+.13,1.1,0,'#112b21','#83a083');
-    const film=details.films[side<0?0:1];
     details.poster(side<0?0:1,x-2.6,y+2.0,split-.13,1.12);
-    room.cinema.halls.push({x,z:cz,side,lamps,lights,screen:{x,z:back},seatCount:24,rows:4,poster:film.title,release:film.release});
+    room.cinema.halls.push({x,z:cz,side,lamps,lights,screen:{x,z:back,bottom:y+1.25,top:y+3.75},seatCount:24,rows:4,poster:film.title,release:film.release});
   }
-  for(const side of [-1,1]){details.poster(side<0?0:1,cx+side*4.35,y+2.03,zFront-.16,1.42);label(side<0?'A 厅 · 我想留在你身边':'B 厅 · 燃烧吧！爸爸',cx+side*4.35,y+.79,zFront-.16,3.2,Math.PI,'#594c56','#e5d7bd');}
+  for(const side of [-1,1]){details.poster(side<0?0:1,cx+side*4.35,y+2.03,zFront-.16,1.42);label(side<0?'A 厅 · 牛来':'B 厅 · 奥德赛',cx+side*4.35,y+.79,zFront-.16,3.2,Math.PI,'#594c56','#e5d7bd');}
   runtime.updates.push((dt,time,camera)=>{
-    if(!camera)return;const c=room.cinema,p=camera.position,inside=Math.abs(p.y-y-1.7)<1.3&&Math.abs(p.x-cx)<w/2-.4&&p.z>split&&p.z<back+.2;
+    if(!camera)return;const c=room.cinema,p=camera.position,inside=p.y>y+.6&&p.y<y+3.7&&Math.abs(p.x-cx)<w/2-.4&&p.z>split&&p.z<back+.2;
     if(!inside){c.still=0;c.mode='auto';}else if(p.distanceToSquared(c.lastPosition)>.0007)c.still=0;else c.still+=dt;
     c.inside=inside;c.lastPosition.copy(p);const target=c.mode==='watch'?0:c.mode==='entry'?1:c.still>4?0:1;c.level+=(target-c.level)*(1-Math.exp(-dt*2.7));
     for(const hall of c.halls){const active=inside&&(p.x-cx)*hall.side>0,level=active?c.level:.1;for(const l of hall.lights){l.visible=active&&level>.015;l.intensity=65*level;}for(const l of hall.lamps)l.material.color.setRGB(.009+level,.011+level*.78,.015+level*.53);}

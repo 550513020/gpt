@@ -43,22 +43,29 @@ gl_FragColor=vec4(retColor,1.0);`);
 
 export function createWeather(scene,model,sky,{mobile=false}={}){
   const group=new THREE.Group();group.name='Weather';scene.add(group);group.userData.excludeAO=true;
-  const rainTime={value:0},rainStrength={value:0};
+  const rainStrength={value:0};
   model.glazing.onBeforeCompile=shader=>{
-    shader.uniforms.rainTime=rainTime;shader.uniforms.rainStrength=rainStrength;
+    shader.uniforms.rainStrength=rainStrength;
     shader.vertexShader='varying vec3 vRainWorld;varying vec3 vRainNormal;\n'+shader.vertexShader;
     shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\nvRainWorld=(modelMatrix*vec4(transformed,1.)).xyz;vRainNormal=normalize(mat3(modelMatrix)*objectNormal);');
-    shader.fragmentShader='uniform float rainTime;uniform float rainStrength;varying vec3 vRainWorld;varying vec3 vRainNormal;\n'+shader.fragmentShader;
+    shader.fragmentShader='uniform float rainStrength;varying vec3 vRainWorld;varying vec3 vRainNormal;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-float lane=(vRainWorld.x+vRainWorld.z+.008*sin(vRainWorld.y*8.+rainTime))*14.;
-float seed=fract(sin(floor(lane)*127.1)*43758.54);
-float line=1.-smoothstep(.015,.095,abs(fract(lane)-.5));
-float slide=pow(1.-fract(vRainWorld.y*.73+rainTime*(.35+seed*.4)+seed*7.),5.);
-float streak=line*slide*rainStrength*(1.-smoothstep(.3,.65,abs(vRainNormal.y)));
-diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.72,.88,.95),streak*.7);
-diffuseColor.a=min(.47,diffuseColor.a+streak*.36);`);
+// Sparse, stationary beads: no clock, lanes, trails or sliding animation.
+vec2 beadUV=vec2(abs(vRainNormal.x)>.7?vRainWorld.z:vRainWorld.x,vRainWorld.y)*3.4;
+vec2 cell=floor(beadUV),hash=fract(cell*vec2(.1031,.11369));
+hash+=dot(hash,hash.yx+19.19);float seed=fract((hash.x+hash.y)*hash.x);
+vec2 center=vec2(.23+fract(seed*7.13)*.54,.23+fract(seed*13.37)*.54);
+vec2 beadDelta=(fract(beadUV)-center)*vec2(1.,.84);
+float radius=mix(.035,.071,fract(seed*31.7));float edge=length(beadDelta);
+float bead=(1.-smoothstep(radius*.55,radius,edge))*step(.965,seed)*rainStrength;
+bead*=1.-smoothstep(.3,.65,abs(vRainNormal.y));
+float rim=smoothstep(radius*.45,radius*.85,edge)*bead;
+diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.79,.86,.88),bead*.16);
+diffuseColor.a=min(.18,diffuseColor.a+bead*.055+rim*.035);`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+rainStrength*.026-bead*.035,.02,1.);');
+    shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\nnormal=normalize(normal+vec3(beadDelta.x,beadDelta.y,0.)*bead*.7);');
   };
-  model.glazing.customProgramCacheKey=()=> 'riverside-rain-glass-v10';model.glazing.needsUpdate=true;
+  model.glazing.customProgramCacheKey=()=> 'riverside-stationary-beads-v13';model.glazing.needsUpdate=true;
   const count=mobile?1500:3800,positions=new Float32Array(count*6),drops=[];
   let seed=74103;const rand=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
   for(let i=0;i<count;i++)drops.push({x:-44+rand()*88,z:-33+rand()*104,y:rand()*39,speed:16+rand()*9,length:.5+rand()*.9});
@@ -93,8 +100,8 @@ diffuseColor.a=min(.47,diffuseColor.a+streak*.36);`);
   let raining=false;
   return {lightPaths,group,shafts,bounce,
     set(mode,direction){raining=mode==='rain';group.visible=raining;shafts.visible=mode==='day';sky.material.uniforms.stormAmount.value=raining?1:0;sky.material.uniforms.daylight.value=mode==='day'?1:0;rainStrength.value=raining?1:0;bounce.intensity=raining?22:mode==='dusk'?16:42;wet.forEach(({material,roughness})=>material.roughness=raining?roughness*.5:roughness);if(mode==='day')alignShafts(direction);},
-    tick(dt,time){sky.material.uniforms.cloudTime.value=time;rainTime.value=time;if(!raining)return;
-      const intensity=.32+.68*Math.pow(.5+.5*Math.sin(time*.24+1.5),2);rainStrength.value=.65+intensity*.35;rain.material.opacity=.5+intensity*.3;geometry.setDrawRange(0,Math.floor(count*intensity)*2);
+    tick(dt,time){sky.material.uniforms.cloudTime.value=time;if(!raining)return;
+      const intensity=.32+.68*Math.pow(.5+.5*Math.sin(time*.24+1.5),2);rain.material.opacity=.5+intensity*.3;geometry.setDrawRange(0,Math.floor(count*intensity)*2);
       for(let i=0;i<count;i++){const d=drops[i];d.y-=d.speed*dt;d.x+=dt*1.6;d.z+=dt*.65;if(d.x>44)d.x=-44;if(d.z>71)d.z=-33;const floor=rainSurface(d.x,d.z);if(d.y<floor+.01)d.y=37+rand()*2;const k=i*6;positions[k]=d.x;positions[k+1]=d.y;positions[k+2]=d.z;positions[k+3]=d.x-.065;positions[k+4]=Math.min(40,d.y+d.length);positions[k+5]=d.z-.026;}
       geometry.attributes.position.needsUpdate=true;
       ripplePoints.forEach((p,i)=>{const phase=(time*1.4+p.phase)%1;transform.position.set(p.x,-.043,p.z);transform.rotation.set(-Math.PI/2,0,0);const scale=(.2+phase*4)*p.scale;transform.scale.set(scale,scale,scale);if(phase>.82)transform.scale.multiplyScalar((1-phase)/.18);transform.updateMatrix();ripples.setMatrixAt(i,transform.matrix);});ripples.instanceMatrix.needsUpdate=true;

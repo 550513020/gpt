@@ -1,6 +1,8 @@
 import * as THREE from './vendor/three.module.js';
-import { fixtureBlocks } from './shop-routes.js?v=11';
-import { circulationHeight } from './circulation.js?v=11';
+import { fixtureBlocks } from './shop-routes.js?v=13';
+import { circulationHeight } from './circulation.js?v=13';
+
+import {cinemaFloorOffset} from './cinema-rake.js?v=13';
 
 export const LEVELS=[0,4.65,9.3,13.95,18.68,-4.2,-8.4];
 export const levelAt=y=>LEVELS.reduce((best,h,i)=>Math.abs(y-h-1.7)<Math.abs(y-LEVELS[best]-1.7)?i:best,0);
@@ -37,7 +39,16 @@ export function createMallNavigator(model){
     if(f<4&&model.runtime.terraces.some(r=>Math.abs(r.y-LEVELS[f])<.1&&roundedDistance(x,z,r.x,r.z,r.w,r.d,r.r)<-.1))return true;
     return rects[f].some(p=>p.r?roundedDistance(x,z,p.x,p.z,p.w,p.d,p.r)<-.14:inRect(x,z,p,.01));
   }
+  const circulationExclusions=[];
+  for(let floor=0;floor<4;floor++){
+    const pair=model.atrium.flights.filter(r=>r.lowerFloor===floor);
+    if(pair.length<2)continue;
+    const xs=pair.map(r=>r.x),zone={minX:Math.min(...xs)-1.02,maxX:Math.max(...xs)+1.02,minZ:44.3,maxZ:54.95,floors:[floor,floor+1]};
+    circulationExclusions.push(zone);
+  }
+  const inCirculationGap=(x,z,f)=>circulationExclusions.some(b=>b.floors.includes(f)&&x>b.minX&&x<b.maxX&&z>b.minZ&&z<b.maxZ);
   function clear(x,z,f,doors=false){
+    if(inCirculationGap(x,z,f))return false;
     if(!supported(x,z,f))return false;const y=LEVELS[f];
     for(const r of rooms){if(Math.abs(r.base-y)>.1)continue;const sd=roundedDistance(x,z,r.cx,r.cz,r.w,r.d,2.6),entry=Math.abs(x-r.cx)<1.13&&Math.abs(z-r.entry.z)<.55;
       if(Math.abs(sd)<.26&&!entry)return false;
@@ -54,6 +65,7 @@ export function createMallNavigator(model){
     if(world.some(b=>Math.abs(b.base-y)<.1&&inRect(x,z,b,-.19)))return false;
     return !barriers[f].some(b=>x>b.minX&&x<b.maxX&&z>b.minZ&&z<b.maxZ&&segmentDistance(x,z,b)<.19);
   }
+  function eyeHeight(x,z,f){const room=rooms.find(r=>r.cinema&&Math.abs(r.base-LEVELS[f])<.1);return LEVELS[f]+1.7+(room?cinemaFloorOffset(room,x,z):0);}
   const cache=new Map(),step=.42,minX=-33.6,minZ=-13.5,nx=190,nz=199;
   function grid(f){if(cache.has(f))return cache.get(f);const free=new Uint8Array(nx*nz);for(let i=0;i<free.length;i++)free[i]=clear(minX+(i%nx)*step,minZ+Math.floor(i/nx)*step,f)?1:0;cache.set(f,free);return free;}
   const coord=i=>new THREE.Vector3(minX+(i%nx)*step,0,minZ+Math.floor(i/nx)*step);
@@ -78,7 +90,21 @@ export function createMallNavigator(model){
     const corners=points.filter((p,i)=>!i||i===points.length-1||Math.abs((p.x-points[i-1].x)*(points[i+1].z-p.z)-(p.z-points[i-1].z)*(points[i+1].x-p.x))>.0001);
     const result=[corners[0]];
     for(let i=0;i<corners.length-1;){let next=i+1;for(let j=corners.length-1;j>i+1;j--){const a=corners[i],b=corners[j],count=Math.ceil(a.distanceTo(b)/.07);let safe=true;for(let k=1;k<count;k++){const t=k/count;if(!clear(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t,f)){safe=false;break;}}if(safe){next=j;break;}}result.push(corners[next]);i=next;}
-    return result;
+    // Round only corners whose entire curve is collision-free, including the
+    // paired-escalator exclusion. Tight shop aisles retain their safe corner.
+    const rounded=[result[0]];
+    for(let i=1;i<result.length-1;i++){
+      const a=result[i-1],b=result[i],c=result[i+1],radius=Math.min(1.25,a.distanceTo(b)*.28,b.distanceTo(c)*.28);
+      const entry=b.clone().lerp(a,radius/(a.distanceTo(b)||1)),exit=b.clone().lerp(c,radius/(b.distanceTo(c)||1)),curve=[];
+      const count=Math.max(8,Math.ceil(radius*2/.045));
+      for(let k=0;k<=count;k++){const t=k/count;curve.push(entry.clone().multiplyScalar((1-t)**2).addScaledVector(b,2*(1-t)*t).addScaledVector(exit,t*t));}
+      if(curve.every(p=>clear(p.x,p.z,f)))rounded.push(...curve);else rounded.push(b);
+    }
+    rounded.push(result.at(-1));result.splice(0,result.length,...rounded);
+    // Keep the horizontal collision-safe route; sample its vertical floor profile.
+    const elevated=[result[0].clone().setY(eyeHeight(result[0].x,result[0].z,f))];
+    for(let i=1;i<result.length;i++){const a=result[i-1],b=result[i],nearCinema=f===3&&Math.max(a.x,b.x)>4.9&&Math.min(a.x,b.x)<22.7&&Math.max(a.z,b.z)>20&&Math.min(a.z,b.z)<28.5,count=nearCinema?Math.ceil(a.distanceTo(b)/.08):1;for(let j=1;j<=count;j++){const p=a.clone().lerp(b,j/count);p.y=eyeHeight(p.x,p.z,f);elevated.push(p);}}
+    return elevated;
   }
   function move(position,delta){
     const out=position.clone(),steps=Math.max(1,Math.ceil(delta.length()/.12)),part=delta.clone().divideScalar(steps);
@@ -88,10 +114,10 @@ export function createMallNavigator(model){
       const onComb=model.atrium.walkables.some(r=>r.w<1.2&&inRect(x,z,r,-.055)&&Math.abs(out.y-r.y-1.7)<.85);
       const lift=[model.atrium.lift,model.express].find(l=>Math.abs(x-l.x)<1.3&&Math.abs(z-l.z)<1.8)||model.atrium.lift,atCab=Math.abs(x-lift.x)<1.08&&z>lift.z-1.45&&z<lift.z+1.03&&Math.abs(out.y-lift.cabin.position.y-1.7)<.55&&lift.open>.85;
       if(!(onFlight||onComb||atCab||clear(x,z,f,true)))return false;
-      out.x=x;out.z=z;out.y=(onFlight||onComb)&&stair!==null?stair:atCab?lift.cabin.position.y+1.7:LEVELS[f]+1.7;return true;
+      out.x=x;out.z=z;out.y=(onFlight||onComb)&&stair!==null?stair:atCab?lift.cabin.position.y+1.7:eyeHeight(x,z,f);return true;
     }
     for(let i=0;i<steps;i++)if(!tryPoint(out.x+part.x,out.z+part.z)){tryPoint(out.x+part.x,out.z);tryPoint(out.x,out.z+part.z);}
     return out;
   }
-  return {plan,clear,supported,move,barriers,world,rects,closest,grid,coord,step};
+  return {circulationExclusions,inCirculationGap,eyeHeight,plan,clear,supported,move,barriers,world,rects,closest,grid,coord,step};
 }

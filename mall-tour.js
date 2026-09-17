@@ -1,13 +1,14 @@
 import * as THREE from './vendor/three.module.js';
-import { LEVELS,levelAt } from './mall-navigation.js?v=11';
-import { createLiftJourney } from './lift-journey.js?v=11';
-import { LOCATIONS } from './scene.js?v=11';
+import { LEVELS,levelAt } from './mall-navigation.js?v=13';
+import { createLiftJourney } from './lift-journey.js?v=13';
+import {createHeadingController,routeHeading,prepareRouteView,angleDelta,headingOf} from './journey-view.js?v=13';
+import { LOCATIONS } from './scene.js?v=13';
 
 const lengthOf=path=>path.slice(1).reduce((n,p,i)=>n+p.distanceTo(path[i]),0);
 const smooth=t=>{t=THREE.MathUtils.clamp(t,0,1);return t*t*(3-2*t);};
 function builder(model,navigator,start=new THREE.Vector3(16,1.7,-14)){
   const actions=[];let floor=levelAt(start.y),at=start.clone();
-  function walk(title,x,z){const path=navigator.plan(at,{x,z},floor),distances=[0];for(let i=1;i<path.length;i++)distances.push(distances.at(-1)+path[i].distanceTo(path[i-1]));const length=distances.at(-1);if(length>.02)actions.push({kind:'walk',title,floor,path,distances,length,duration:length/3.5});at=path.at(-1).clone();}
+  function walk(title,x,z){const path=navigator.plan(at,{x,z},floor),distances=[0];for(let i=1;i<path.length;i++)distances.push(distances.at(-1)+path[i].distanceTo(path[i-1]));const length=distances.at(-1);if(length>.02){const action={kind:'walk',title,floor,path,distances,length,duration:length/2.6};prepareRouteView(action);actions.push(action);}at=path.at(-1).clone();}
   function pause(title,look,duration=4,extra={}){actions.push({kind:'pause',title,floor,position:at.clone(),look:new THREE.Vector3(...look),duration,...extra});}
   function ride(to,lift=model.atrium.lift){walk(lift.fast?'前往微空港快线':'沿回廊前往观光电梯',lift.x,lift.z-2.85);actions.push({kind:'lift',title:'候梯与乘梯',lift,from:floor,to,floor,duration:10+Math.abs(LEVELS[to]-LEVELS[floor])/(lift.fast?4:1.8)});floor=to;at=new THREE.Vector3(lift.x,LEVELS[floor]+1.7,lift.z-2.85);}
   function rest(f){const p=model.runtime.rests.find(p=>p.floor===f);if(!p)return;walk(`${f+1}F · 庭院观景休息台`,p.x,p.z);pause('坐下来，俯瞰内院与楼下人流',p.look,5,{kind:'rest',minutes:20});}
@@ -54,27 +55,37 @@ export function buildDestinationItinerary(model,navigator,start,key){
 }
 function positionAt(action,distance){const path=action.path;let i=1;while(i<action.distances.length-1&&action.distances[i]<distance)i++;const a=path[Math.max(0,i-1)],b=path[Math.min(i,path.length-1)];return a.clone().lerp(b,THREE.MathUtils.clamp((distance-action.distances[i-1])/(action.distances[i]-action.distances[i-1]||1),0,1));}
 export function createShoppingTour(model,navigator){
-  let itinerary=null,index=0,elapsed=0,travelled=0,active=false,paused=false,liftRun=null,balance=0;const bag=[],events=[];let dispatched=false;
-  function start({budget=2000,start=null,destination=null}={}){itinerary=destination?buildDestinationItinerary(model,navigator,start,destination):buildShoppingItinerary(model,navigator,Math.max(0,budget));index=elapsed=travelled=0;active=true;paused=false;liftRun=null;balance=budget;bag.length=events.length=0;dispatched=false;}
+  let itinerary=null,index=0,elapsed=0,travelled=0,active=false,paused=false,liftRun=null,balance=0;const bag=[],events=[];let dispatched=false;const heading=createHeadingController();
+  function start({budget=2000,start=null,destination=null}={}){itinerary=destination?buildDestinationItinerary(model,navigator,start,destination):buildShoppingItinerary(model,navigator,Math.max(0,budget));index=elapsed=travelled=0;heading.reset();active=true;paused=false;liftRun=null;balance=budget;bag.length=events.length=0;dispatched=false;}
   function next(){index++;elapsed=travelled=0;dispatched=false;liftRun=null;if(index>=itinerary.actions.length)active=false;}
   function tick(dt,speed=1){
-    if(!active||paused)return null;const action=itinerary.actions[index];elapsed+=dt*(['rest','checkout'].includes(action.kind)?1:speed);let position,look,label=action.title,checkout=null,clock=null;
+    if(!active||paused)return null;const action=itinerary.actions[index];elapsed+=dt*(['rest','checkout'].includes(action.kind)?1:speed);let position,look,guideYaw,label=action.title,checkout=null,clock=null;
     if(action.kind==='lift'){if(!liftRun)liftRun=createLiftJourney(action.lift,action.from,action.to);const result=liftRun.tick(dt*speed);position=result.position;look=result.look;label=result.label;if(result.done)next();}
     else if(action.kind==='walk'){
-      const here=positionAt(action,travelled),near=positionAt(action,Math.min(action.length,travelled+1)),far=positionAt(action,Math.min(action.length,travelled+5));const d1=near.clone().sub(here).normalize(),d2=far.clone().sub(here).normalize(),turn=Math.acos(THREE.MathUtils.clamp(d1.dot(d2),-1,1));
-      const advance=dt*speed*3.8/(1+turn*.7);travelled=Math.min(action.length,travelled+advance);position=positionAt(action,travelled);
+      const targetYaw=routeHeading(action,travelled);guideYaw=heading.tick(targetYaw,dt);
+      const alignment=Math.abs(angleDelta(targetYaw,guideYaw));
+      // Slow right down for a hairpin; travel resumes as the view faces the aisle.
+      const turnScale=THREE.MathUtils.clamp(1-alignment/.75,.035,1);
+      const bend=Math.abs(angleDelta(routeHeading(action,Math.min(action.length,travelled+1.8)),targetYaw));
+      const advance=dt*speed*2.6*turnScale/(1+bend*1.8);travelled=Math.min(action.length,travelled+advance);position=positionAt(action,travelled);
       const door=model.runtime.doors.find(d=>Math.abs(position.x-d.x)<1.35&&Math.abs(position.z-d.z)<.6&&Math.abs(position.y-d.base-1.7)<.3);
       if(door&&door.open<.9){travelled=Math.max(0,travelled-advance);position=positionAt(action,travelled);label='感应门正在开启';}
-      look=positionAt(action,Math.min(action.length,travelled+5));if(look.distanceTo(position)<.1){const earlier=positionAt(action,Math.max(0,travelled-1));look.copy(position).add(position.clone().sub(earlier).normalize().multiplyScalar(3));}look.y=position.y-.02;const upcoming=itinerary.actions[index+1];if(upcoming?.look&&action.length-travelled<5){const anticipation=smooth(1-(action.length-travelled)/5);look.lerp(upcoming.look,anticipation*.85);}
+      look=position.clone().add(new THREE.Vector3(-Math.sin(guideYaw)*6,0,-Math.cos(guideYaw)*6));
       if(travelled>=action.length&&label!=='感应门正在开启')next();
     }else{
       position=action.position.clone();look=action.look.clone();
+      const following=itinerary.actions[index+1];
+      const target=following?.kind==='walk'&&action.duration-elapsed<3?routeHeading(following,0):(heading.yaw??headingOf(position,look));
+      guideYaw=heading.tick(target,dt);
       if(action.kind==='rest'){const seated=smooth(elapsed/.85)*(1-smooth((elapsed-4.15)/.85));position.y-=seated*.57;clock={seconds:Math.ceil(action.minutes*60*(1-THREE.MathUtils.clamp((elapsed-1)/3,0,1))),progress:THREE.MathUtils.clamp((elapsed-1)/3,0,1),seated};}
       if(action.kind==='checkout'){const paid=elapsed>=2;if(paid&&!dispatched){dispatched=true;balance-=action.price;const item={item:action.item,price:action.price};bag.push(item);events.push({kind:'buy',...item});}checkout={item:action.item,price:action.price,before:balance+(paid?action.price:0),after:balance-(paid?0:action.price),paid};}
       if(action.event&&!dispatched&&elapsed>.7){dispatched=true;events.push(action.event);}
       if(elapsed>=action.duration)next();
     }
-    return {position,look,label,kind:action.kind,step:Math.min(index+1,itinerary.actions.length),steps:itinerary.actions.length,progress:Math.min(1,(index+Math.min(elapsed/(action.duration||1),.99))/itinerary.actions.length),floor:action.floor,done:!active,bag:[...bag],checkout,clock,balance,budget:itinerary.budget};
+    if(guideYaw===undefined)guideYaw=heading.tick(headingOf(position,look),dt);
+    // A level horizon, including on raked cinema floors. Dragging remains free.
+    look=position.clone().add(new THREE.Vector3(-Math.sin(guideYaw)*6,0,-Math.cos(guideYaw)*6));
+    return {position,look,guideYaw,label,kind:action.kind,step:Math.min(index+1,itinerary.actions.length),steps:itinerary.actions.length,progress:Math.min(1,(index+Math.min(elapsed/(action.duration||1),.99))/itinerary.actions.length),floor:action.floor,done:!active,bag:[...bag],checkout,clock,balance,budget:itinerary.budget};
   }
   return {start,tick,stop(){active=false;paused=false;},pause(){paused=!paused;return paused;},get active(){return active;},get paused(){return paused;},get itinerary(){return itinerary;},get index(){return index;},get bag(){return bag;},get balance(){return balance;},get events(){return events;}};
 }

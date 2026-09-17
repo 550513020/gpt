@@ -1,5 +1,7 @@
 import * as THREE from './vendor/three.module.js';
-import { createMerchandise } from './merchandise.js?v=11';
+import { createMerchandise } from './merchandise.js?v=13';
+
+import {createPatisserie} from './patisserie.js?v=13';
 
 export function addBakery(api,room){
   const {box,slab,inst,sphere,label,glassGroup,vitrine,mats:M,unitCylinder:C,unitTorus:T}=api,{cx,cz,base:y}=room;
@@ -7,6 +9,7 @@ export function addBakery(api,room){
   const bagelGeometry=new THREE.TorusGeometry(.14,.065,8,24);
   const bread=new THREE.MeshStandardMaterial({color:'#c58a43',roughness:.86}),crust=new THREE.MeshStandardMaterial({color:'#94602d',roughness:.9});
   room.menu=['croissant','sourdough','bagel','strawberryCake','coffee'];room.bakery={islands:2,coldDisplay:true,seating:6,breads:0};
+  const {pastry}=createPatisserie(api,room);
   function loaf(x,z,k,yy=y+1.11){
     inst(C,M.ivory,x,yy-.015,z,.26,.018,.24);
     if(k%4===0){for(let j=0;j<5;j++)sphere(j%2?bread:crust,x+(j-2)*.083,yy+.08-Math.abs(j-2)*.017,z+Math.abs(j-2)*.025,.09,.075,.13);}
@@ -19,20 +22,23 @@ export function addBakery(api,room){
   // Two L-shaped islands leave a 2.4 m centre aisle and continuous outer loop.
   for(const side of [-1,1]){
     const x=cx+side*3.1;counter(x,cz-.3,1.35,4.8);counter(x+side*.7,cz+2,2.75,1.25);
-    for(let j=0;j<7;j++)for(const off of [-.29,.29])loaf(x+off,cz-2.15+j*.62,j+(side>0?1:0));
-    label(side<0?'每日现烤 · SOURDOUGH':'黄油可颂 · BRIOCHE',x,y+.64,cz-2.73,1.23,Math.PI,'#b5bdad','#233c34');
+    for(let j=0;j<7;j++)for(const off of [-.29,.29]){if(side<0)loaf(x+off,cz-2.15+j*.62,j);else pastry(['eggTart','cookie','eclair','fruitTart','canele','strawberryCake','macaron'][j],x+off,y+1.11,cz-2.15+j*.62,j);}
+    label(side<0?'每日现烤 · SOURDOUGH':'蛋挞 · 曲奇 · 每日甜点',x,y+.64,cz-2.73,1.23,Math.PI,'#b5bdad','#233c34');
   }
   // Refrigerated patisserie follows the sketch's right-hand edge.
   counter(cx+7.45,cz+.2,1.5,7.1);
   const cover=new THREE.Mesh(new THREE.BoxGeometry(1.45,1.0,7),vitrine);cover.position.set(cx+7.45,y+1.53,cz+.2);glassGroup.add(cover);
   for(let row=0;row<2;row++){
     box(steel,cx+7.45,y+1.06+row*.53,cz+.2,1.5,.035,7.1);
-    for(let j=0;j<9;j++)loaf(cx+7.45,cz-2.6+j*.7,3,y+1.12+row*.53);
+    for(let j=0;j<9;j++)pastry(['strawberryCake','fruitTart','eclair','macaron','eggTart','cookie','canele','fruitTart','strawberryCake'][j],cx+7.45,y+1.12+row*.53,cz-2.6+j*.7,j+row);
   }
-  label('冷藏甜点 · KEEP COOL',cx+7.45,y+2.22,cz-3.37,1.5,Math.PI,'#72988a','#fffbe9');
+  label('冷藏糕点 · 2–6°C',cx+7.45,y+2.22,cz-3.37,1.5,Math.PI,'#72988a','#fffbe9');
   counter(cx+3.3,cz+5.6,7.8,1.35);box(steel,cx+4.5,y+1.43,cz+5.6,1.25,.69,.66);
   for(const dx of [-.36,.36]){inst(C,M.black,cx+4.5+dx,y+1.05,cz+5.17,.1,.02,.12);inst(C,M.ivory,cx+4.5+dx,y+1.2,cz+5.13,.09,.16,.09);}
-  box(M.black,cx+1.25,y+1.4,cz+5.3,.46,.4,.08);label('COFFEE / PICK UP',cx+2.6,y+2.5,cz+6.95,5,Math.PI,'#d3d4bf','#344e42');
+  box(M.black,cx+1.25,y+1.4,cz+5.3,.54,.4,.08);box(M.teal,cx+1.25,y+1.4,cz+5.251,.47,.31,.012);
+  box(M.ivory,cx+.65,y+1.15,cz+5.13,.24,.14,.26);box(M.cream,cx+.65,y+1.25,cz+5.03,.11,.1,.008);
+  label('收银 · 咖啡 · 取餐',cx+2.6,y+2.5,cz+6.95,5,Math.PI,'#8c3b32','#fff1d4');
+  label('CASHIER / PICK UP',cx+1.0,y+.62,cz+4.87,2.4,Math.PI,'#8c3b32','#fff1d4');
   for(let j=0;j<6;j++){box(M.cream,cx+.3+j*.65,y+1.27,cz+5.9,.37,.43,.27);label('BAKE',cx+.3+j*.65,y+1.3,cz+5.75,.32,Math.PI,'#e3dcc7','#537767');}
   // Booth seating along the left wall; stools do not invade the shopping loop.
   slab(M.teal,cx-8,y+.25,cz,1.0,6.1,.18,.31);box(M.teal,cx-8.4,y+1.0,cz,.18,1.0,6.1);

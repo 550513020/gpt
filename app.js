@@ -1,17 +1,19 @@
-import { createScenePerformance } from './performance.js?v=11';
+import { createScenePerformance } from './performance.js?v=13';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import { Sky } from 'three/addons/Sky.js';
-import { createArchitecture, LOCATIONS } from './scene.js?v=11';
-import { stairWalkingHeight } from './atrium.js?v=11';
-import { loadSurfaceMaps } from './materials.js?v=11';
-import { createLightingPipeline } from './lighting.js?v=11';
-import { circulationHeight } from './circulation.js?v=11';
-import { enhanceSky,createWeather,sunDirection } from './weather.js?v=11';
-import { createMallNavigator,levelAt,LEVELS } from './mall-navigation.js?v=11';
-import { createLiftJourney,setLiftPose } from './lift-journey.js?v=11';
-import { createShoppingTour } from './mall-tour.js?v=11';
-import { addShoppers } from './shoppers.js?v=11';
+import { createArchitecture, LOCATIONS } from './scene.js?v=13';
+import { stairWalkingHeight } from './atrium.js?v=13';
+import { loadSurfaceMaps } from './materials.js?v=13';
+import { createLightingPipeline } from './lighting.js?v=13';
+import { circulationHeight } from './circulation.js?v=13';
+import { enhanceSky,createWeather,sunDirection } from './weather.js?v=13';
+import { createMallNavigator,levelAt,LEVELS } from './mall-navigation.js?v=13';
+import { createLiftJourney,setLiftPose } from './lift-journey.js?v=13';
+import { createDaylightBalance } from './daylight.js?v=13';
+import { angleDelta } from './journey-view.js?v=13';
+import { createShoppingTour } from './mall-tour.js?v=13';
+import { addShoppers } from './shoppers.js?v=13';
 
 const $=id=>document.getElementById(id);
 const container=$('viewport');
@@ -47,6 +49,8 @@ renderer.shadowMap.autoUpdate=false;
 // Four warm area lights are represented with point lights to keep the model light.
 const retailLights=[];
 for(const x of [-16,16])for(const z of [-1,24]){const light=new THREE.PointLight('#ffcf88',38,20,2);light.position.set(x,3.55,z);scene.add(light);retailLights.push(light);}
+const daylight=createDaylightBalance(model,retailLights);
+let recentering=false;
 let envRT=null,currentView='front',walk=false,transition=null,ride=null,drive=null,lastTime=performance.now(),lightMode='day';
 let interiorOn=true,reflectivity=.08,lookYaw=0,lookPitch=0,drag=null;
 let tourYaw=0,tourPitch=0,baseYaw=0,basePitch=0,lastPose=null,freeAltitude=false;
@@ -64,11 +68,14 @@ function setLight(mode){
   sun.color.set(day?'#fff0d7':rain?'#e2eaf0':'#ffdaa8');sun.intensity=day?4.65:rain?.28:1.5;sun.position.copy(direction.clone().multiplyScalar(70)).add(sun.target.position);
   hemi.color.set(day?'#d8e9ff':'#b6cdeb');hemi.intensity=day?.82:rain?1.05:1.15;fill.intensity=day?.13:rain?.22:.16;
   outdoorFog.color.set(day?'#bdd9ee':rain?'#9fadb5':'#b5c6db');outdoorFog.density=day?.0015:rain?.009:.0038;renderer.toneMappingExposure=day?.98:rain?1.04:1.08;weather.set(mode,direction);
-  setInterior(interiorOn);document.querySelectorAll('[data-light]').forEach(b=>{b.classList.toggle('selected',b.dataset.light===mode);b.setAttribute('aria-pressed',String(b.dataset.light===mode));});refreshEnvironment();renderer.shadowMap.needsUpdate=true;
+  daylight.set(mode,interiorOn,direction);setInterior(interiorOn);document.querySelectorAll('[data-light]').forEach(b=>{b.classList.toggle('selected',b.dataset.light===mode);b.setAttribute('aria-pressed',String(b.dataset.light===mode));});refreshEnvironment();renderer.shadowMap.needsUpdate=true;
 }
-function setInterior(on){interiorOn=on;const scale=on?(lightMode==='day'?.65:1):0;model.mats.whiteGlow.emissiveIntensity=1.1*scale;model.mats.warmGlow.emissiveIntensity=1.6*scale;model.mats.wall.emissiveIntensity=.13*scale;retailLights.forEach(l=>l.intensity=38*scale);}
+function setInterior(on){interiorOn=on;daylight.set(lightMode,on);if(!on)daylight.tick(0,camera);}
+
 function viewPosition(key){const data=LOCATIONS[key];const eye=new THREE.Vector3(...data.eye),target=new THREE.Vector3(...data.target);if(['front','aerial','roof'].includes(key)){const factor=Math.max(1,(isMobile?1.12:1.75)/(innerWidth/innerHeight));eye.sub(target).multiplyScalar(factor).add(target);}return {eye,target};}
+function journeyLens(active){camera.fov=isMobile?(innerWidth<innerHeight?66:58):active?58:44;camera.updateProjectionMatrix();}
 function setView(key,immediate=false){
+  journeyLens(false);
   stopJourney(false);controls.enabled=true;document.body.classList.remove('immersive');setMenu(false);
   if(walk)setWalk(false);currentView=key;history.replaceState(null,'','#'+key);const data=LOCATIONS[key],p=viewPosition(key);
   $('store-view').value=[...$('store-view').options].some(o=>o.value===key)?key:'';
@@ -79,9 +86,9 @@ function setView(key,immediate=false){
   if(immediate||reducedMotion){transition=null;camera.position.copy(p.eye);controls.target.copy(p.target);controls.update();}else transition={start:performance.now(),from:camera.position.clone(),to:p.eye,fromTarget:controls.target.clone(),toTarget:p.target};
 }
 function captureLook(){const d=new THREE.Vector3();camera.getWorldDirection(d);lookYaw=Math.atan2(-d.x,-d.z);lookPitch=Math.asin(THREE.MathUtils.clamp(d.y,-.95,.95));}
-function walkUI(enabled){walk=enabled;document.body.classList.toggle('immersive',(enabled&&isMobile)||tour.active||!!ride||!!drive);$('leave-walk').hidden=!enabled||!isMobile;setMenu(false);controls.enabled=!enabled;keys.clear();$('walk').setAttribute('aria-pressed',String(enabled));$('walk-help').hidden=!enabled;$('walk-pad').hidden=!enabled;}
+function walkUI(enabled){walk=enabled;journeyLens(enabled);document.body.classList.toggle('immersive',(enabled&&isMobile)||tour.active||!!ride||!!drive);$('leave-walk').hidden=!enabled||!isMobile;setMenu(false);controls.enabled=!enabled;keys.clear();$('walk').setAttribute('aria-pressed',String(enabled));$('walk-help').hidden=!enabled;$('walk-pad').hidden=!enabled;}
 function settleLift(){for(const lift of [model.atrium.lift,model.express]){const y=lift.cabin.position.y-.04;let f=0;for(let i=1;i<LEVELS.length;i++)if(Math.abs(LEVELS[i]-y)<Math.abs(LEVELS[f]-y))f=i;setLiftPose(lift,LEVELS[f],1,f);}}
-function stopJourney(keepPanel=false){if(tour.active||ride)settleLift();tour.stop();ride=null;drive=null;tourYaw=tourPitch=0;lastPose=null;$('tour-start').textContent='一键逛街';if(!keepPanel)$('tour-panel').hidden=true;$('checkout-card').hidden=true;$('time-card').hidden=true;$('ride-status').hidden=true;}
+function stopJourney(keepPanel=false){if(tour.active||ride)settleLift();tour.stop();ride=null;drive=null;tourYaw=tourPitch=0;recentering=false;lastPose=null;$('journey-recenter').hidden=true;$('tour-start').textContent='一键逛街';if(!keepPanel)$('tour-panel').hidden=true;$('checkout-card').hidden=true;$('time-card').hidden=true;$('ride-status').hidden=true;}
 function setWalk(enabled){
   stopJourney();transition=null;
   if(enabled){
@@ -99,8 +106,9 @@ function stepWalk(dt){
 }
 function applyJourneyPose(pose,dt,immediate=false){
   if(!pose)return;camera.position.copy(pose.position);const d=pose.look.clone().sub(pose.position).normalize(),yaw=Math.atan2(-d.x,-d.z),pitch=Math.asin(THREE.MathUtils.clamp(d.y,-.95,.95));
-  if(immediate){baseYaw=yaw;basePitch=pitch;}else{const delta=THREE.MathUtils.euclideanModulo(yaw-baseYaw+Math.PI,Math.PI*2)-Math.PI;const ease=1-Math.exp(-dt*1.9),step=THREE.MathUtils.clamp(delta*ease,-dt*.62,dt*.62);baseYaw+=step;basePitch+=(pitch-basePitch)*ease;}
-  camera.rotation.order='YXZ';camera.rotation.set(THREE.MathUtils.clamp(basePitch+tourPitch,-1.35,1.35),baseYaw+tourYaw+(pose.kind==='walk'&&!reducedMotion?Math.sin(performance.now()/6800)*.065:0),0);lastPose=pose;
+  if(Number.isFinite(pose.guideYaw)){baseYaw=pose.guideYaw;basePitch=0;}else if(immediate){baseYaw=yaw;basePitch=pitch;}else{const delta=THREE.MathUtils.euclideanModulo(yaw-baseYaw+Math.PI,Math.PI*2)-Math.PI;const ease=1-Math.exp(-dt*1.9),step=THREE.MathUtils.clamp(delta*ease,-dt*.62,dt*.62);baseYaw+=step;basePitch+=(pitch-basePitch)*ease;}
+  if(recentering){const ease=1-Math.exp(-dt*3.5);tourYaw+=THREE.MathUtils.clamp(angleDelta(0,tourYaw)*ease,-dt*1.15,dt*1.15);tourPitch+=THREE.MathUtils.clamp(-tourPitch*ease,-dt*.75,dt*.75);if(Math.abs(angleDelta(0,tourYaw))<.003&&Math.abs(tourPitch)<.003){tourYaw=tourPitch=0;recentering=false;}}
+  camera.rotation.order='YXZ';camera.rotation.set(THREE.MathUtils.clamp(basePitch+tourPitch,-1.35,1.35),baseYaw+tourYaw,0);lastPose=pose;
 }
 function startTour(destination=null){
   stopJourney();walkUI(false);transition=null;controls.enabled=false;
@@ -108,7 +116,7 @@ function startTour(destination=null){
   try{tour.start(destination?{start,destination}:{budget});}catch(err){controls.enabled=true;notice('此位置暂时无法生成路线，请从庭院开始。');console.error(err);return;}tourYaw=tourPitch=0;
   document.body.classList.add('immersive');document.body.classList.remove('menu-open');$('tour-panel').hidden=false;$('tour-start').textContent='重新逛街';$('tour-pause').textContent='暂停';$('tour-pause').disabled=false;$('tour-time').textContent='约 '+Math.ceil(tour.itinerary.duration/60)+' 分钟 · 拖动可环顾';
   $('view-title').textContent=destination?'自动寻路 · '+LOCATIONS[destination].title:'第一人称 · 预算逛街';$('view-description').textContent='1F 购物 → 2F 试衣 → 3F 用餐 → 4F 娱乐 → RF 航空站';$('tour-bag').textContent=destination?'按实际通路步行，可拖动环顾':'预算 ¥'+budget+' · 模拟购物袋';
-  applyJourneyPose(tour.tick(0),0,true);renderer.domElement.focus();
+  journeyLens(true);$('journey-recenter').hidden=false;applyJourneyPose(tour.tick(0),0,true);renderer.domElement.focus();
 }
 function updateTourUI(pose){
   $('tour-activity').textContent=pose.label;$('tour-progress').value=pose.progress;$('tour-step').textContent=pose.step+' / '+pose.steps;
@@ -161,6 +169,7 @@ $('ride-lift').addEventListener('click',beginLift);$('ride-cancel').addEventList
 $('tour-start').addEventListener('click',()=>startTour());
 $('tour-pause').addEventListener('click',()=>{if(!tour.active)return;$('tour-pause').textContent=tour.pause()?'继续':'暂停';});
 $('tour-stop').addEventListener('click',()=>setWalk(true));
+$('journey-recenter').addEventListener('click',()=>{recentering=true;renderer.domElement.focus();});
 $('people').addEventListener('change',e=>shoppers.group.visible=e.target.checked);
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 document.querySelectorAll('[data-light]').forEach(b=>b.addEventListener('click',()=>setLight(b.dataset.light)));
@@ -181,14 +190,14 @@ $('save-image').addEventListener('click',()=>{
 $('panel-toggle').addEventListener('click',()=>{const collapsed=document.querySelector('.material-panel').classList.toggle('collapsed');$('panel-toggle').textContent=collapsed?'+':'−';$('panel-toggle').setAttribute('aria-expanded',String(!collapsed));$('panel-toggle').setAttribute('aria-label',collapsed?'展开光影与材质':'收起光影与材质');});
 $('references').addEventListener('click',()=>{keys.clear();$('reference-dialog').showModal();});$('close-dialog').addEventListener('click',()=>$('reference-dialog').close());$('reference-dialog').addEventListener('click',e=>{if(e.target===$('reference-dialog')){const rect=e.target.getBoundingClientRect();if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)e.target.close();}});
 $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if($('experience').requestFullscreen)await $('experience').requestFullscreen();else notice('此浏览器不支持全屏，可横屏查看。');}catch{notice('此浏览器暂时无法进入全屏。');}});
-renderer.domElement.addEventListener('pointerdown',e=>{transition=null;if(walk||tour.active||ride||drive){drag={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);}});
-renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;const dx=(e.clientX-drag.x)*.0035,dy=(e.clientY-drag.y)*.003;if(walk){lookYaw-=dx;lookPitch=THREE.MathUtils.clamp(lookPitch-dy,-1.35,1.35);}else if(tour.active||ride||drive){tourYaw-=dx;tourPitch=THREE.MathUtils.clamp(tourPitch-dy,-1.1,1.1);if(tour.paused&&lastPose)applyJourneyPose(lastPose,0);}drag={x:e.clientX,y:e.clientY};});
+renderer.domElement.addEventListener('pointerdown',e=>{transition=null;if(walk||tour.active||ride||drive){recentering=false;drag={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);}});
+renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;const dx=(e.clientX-drag.x)*.0035,dy=(e.clientY-drag.y)*.003;if(walk){lookYaw-=dx;lookPitch=THREE.MathUtils.clamp(lookPitch-dy,-1.35,1.35);}else if(tour.active||ride||drive){tourYaw=angleDelta(tourYaw-dx,0);tourPitch=THREE.MathUtils.clamp(tourPitch-dy,-1.1,1.1);if(tour.paused&&lastPose)applyJourneyPose(lastPose,0);}drag={x:e.clientX,y:e.clientY};});
 const endDrag=()=>drag=null;renderer.domElement.addEventListener('pointerup',endDrag);renderer.domElement.addEventListener('pointercancel',endDrag);
 renderer.domElement.addEventListener('wheel',()=>transition=null,{passive:true});
-window.addEventListener('keydown',e=>{if($('reference-dialog').open||['INPUT','BUTTON','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;const key=e.key.length===1?e.key.toLowerCase():e.key;if(walk&&['w','a','s','d','q','e','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Shift'].includes(key)){keys.add(key);e.preventDefault();}if(e.key==='Escape'){if(tour.active||ride||drive)setWalk(true);else if(walk)setWalk(false);}});
+window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='r'&&tour.active&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)){recentering=true;e.preventDefault();return;}if($('reference-dialog').open||['INPUT','BUTTON','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;const key=e.key.length===1?e.key.toLowerCase():e.key;if(walk&&['w','a','s','d','q','e','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Shift'].includes(key)){keys.add(key);e.preventDefault();}if(e.key==='Escape'){if(tour.active||ride||drive)setWalk(true);else if(walk)setWalk(false);}});
 window.addEventListener('keyup',e=>keys.delete(e.key.length===1?e.key.toLowerCase():e.key));window.addEventListener('blur',()=>{keys.clear();drag=null;});
 const stepKeys={forward:'w',back:'s',left:'a',right:'d'};document.querySelectorAll('[data-step]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();keys.add(stepKeys[b.dataset.step]);b.setPointerCapture(e.pointerId);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,()=>keys.delete(stepKeys[b.dataset.step]));});
-function sizeRenderer(){camera.aspect=innerWidth/innerHeight;camera.fov=isMobile?(innerWidth<innerHeight?66:58):44;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));composer.setSize(innerWidth,innerHeight);}
+function sizeRenderer(){camera.aspect=innerWidth/innerHeight;camera.fov=isMobile?(innerWidth<innerHeight?66:58):(walk||tour.active||ride||drive)?58:44;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));composer.setSize(innerWidth,innerHeight);}
 function applyQuality(level){qualityLevel=level;pixelScale=level==='low'?(isMobile?.85:.9):level==='high'?1.35:(isMobile?1:1.15);performanceModel.setQuality(level);composer.ambientOcclusion.enabled=level==='high';const shadow=level==='high'?2048:level==='low'?1024:1536;sun.shadow.mapSize.set(shadow,shadow);sun.shadow.map?.dispose();sun.shadow.map=null;renderer.shadowMap.needsUpdate=true;sizeRenderer();$('quality-status').textContent=qualityChoice==='auto'?(level==='low'?'自动 · 流畅优先':'自动 · 均衡画质'):(level==='low'?'流畅优先':level==='high'?'清晰画质':'均衡画质');}
 $('quality').addEventListener('change',e=>{qualityChoice=e.target.value;slowFrames=0;applyQuality(qualityChoice==='auto'?(isMobile?'low':'balanced'):qualityChoice);});
 window.addEventListener('resize',()=>{sizeRenderer();if(!walk&&!tour.active&&!ride&&!drive&&['front','aerial','roof'].includes(currentView)){const p=viewPosition(currentView);camera.position.copy(p.eye);controls.target.copy(p.target);controls.update();}});
@@ -205,16 +214,17 @@ function animate(time){
   const underground=camera.position.y<-.6;scene.fog=underground?null:outdoorFog;for(const l of model.parking.lights)l.visible=underground&&Math.abs(l.position.y-camera.position.y)<2.3;
   const dt=Math.min((time-lastTime)/1000,.15);lastTime=time;
   if(!$('reference-dialog').open){if(transition){const t=THREE.MathUtils.clamp((time-transition.start)/1700,0,1);const ease=t*t*(3-2*t);camera.position.lerpVectors(transition.from,transition.to,ease);controls.target.lerpVectors(transition.fromTarget,transition.toTarget,ease);if(t===1)transition=null;}
-    if(tour.active){const pose=tour.tick(dt,Number($('tour-speed').value));if(pose){applyJourneyPose(pose,dt);updateTourUI(pose);if(pose.done){$('tour-pause').disabled=true;$('tour-time').textContent='本次逛街已完成 · 全部为模拟体验';captureLook();currentView='courtyard';walkUI(true);$('checkout-card').hidden=$('time-card').hidden=true;freeAltitude=false;renderer.domElement.focus();$('view-title').textContent=tour.itinerary.destination?'已到达 · '+LOCATIONS[tour.itinerary.destination].title:'逛街完成';}}}
+    if(tour.active){if(tour.paused&&lastPose)applyJourneyPose(lastPose,dt);const pose=tour.tick(dt,Number($('tour-speed').value));if(pose){applyJourneyPose(pose,dt);updateTourUI(pose);if(pose.done){$('journey-recenter').hidden=true;$('tour-pause').disabled=true;$('tour-time').textContent='本次逛街已完成 · 全部为模拟体验';captureLook();currentView='courtyard';walkUI(true);$('checkout-card').hidden=$('time-card').hidden=true;freeAltitude=false;renderer.domElement.focus();$('view-title').textContent=tour.itinerary.destination?'已到达 · '+LOCATIONS[tour.itinerary.destination].title:'逛街完成';}}}
     else if(ride)tickRide(dt);else if(drive)tickDrive(dt);else if(walk)stepWalk(dt);else controls.update();
+    const activeCinema=model.runtime.rooms.find(r=>r.cinema)?.cinema;daylight.tick(dt,camera,activeCinema);
     model.update(dt,time/1000,camera,interiorOn);
     const cinema=model.runtime.rooms.find(r=>r.cinema)?.cinema;$('cinema-toggle').hidden=!cinema?.inside||!!drive;$('cinema-toggle').textContent=cinema?.level>.4?'开始放映 · 关闭顶灯':'打开入场顶灯';
     const lamps=cinema?.inside?cinema.halls.flatMap(h=>h.lights).filter(l=>l.visible):[];
-    for(let i=0;i<retailLights.length;i++){const l=retailLights[i];l.userData.home??=l.position.clone();if(cinema?.inside){if(lamps[i])l.position.copy(lamps[i].position);l.intensity=interiorOn?(lamps[i]?.intensity||0):0;}else{l.position.copy(l.userData.home);l.intensity=interiorOn?38*(lightMode==='day'?.65:1):0;}}
+    if(cinema?.inside)for(let i=0;i<retailLights.length;i++){const l=retailLights[i];if(lamps[i])l.position.copy(lamps[i].position);l.intensity=interiorOn?(lamps[i]?.intensity||0):0;}
     $('drive-parking').hidden=!underground||tour.active||!!ride||!!drive;
     shoppers.tick(dt,time/1000,camera);weather.tick(dt,time/1000);renderer.info.reset();composer.render(dt);}
   requestAnimationFrame(animate);
 }
 model.update(0,0,camera,true);performanceModel.tick(camera,0,true);renderer.compile(scene,camera);composer.render();$('loading').classList.add('done');setTimeout(()=>$('loading').hidden=true,700);requestAnimationFrame(animate);
 // Expose only a compact scene summary, useful for troubleshooting a user report.
-window.riversideScene={stats:model.stats,threeVersion:THREE.REVISION,materialMaps:surfaces.loaded,get performance(){return {device:isMobile?'mobile':'desktop',quality:qualityLevel,pixelRatio:renderer.getPixelRatio(),fps:Math.round(1000/frameAverage),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,lod:performanceModel.summary};},contactShadows:true,skyLightPaths:weather.lightPaths,get state(){return {view:currentView,walk,touring:tour.active,paused:tour.paused,step:tour.index,bag:tour.bag,balance:tour.balance,destination:tour.itinerary?.destination,position:camera.position.toArray(),rotation:[camera.rotation.x,camera.rotation.y],liftFloor:model.atrium.lift.dockFloor,liftOpen:model.atrium.lift.open,ride:!!ride,driving:!!drive,cinema:model.runtime.rooms.find(r=>r.cinema)?.cinema?{level:model.runtime.rooms.find(r=>r.cinema).cinema.level,inside:model.runtime.rooms.find(r=>r.cinema).cinema.inside}:null,doors:model.runtime.doors.map(d=>d.open),peopleVisible:shoppers.group.visible};}};
+window.riversideScene={edition:'v13',get daylight(){return daylight.summary;},stats:model.stats,threeVersion:THREE.REVISION,materialMaps:surfaces.loaded,get performance(){return {device:isMobile?'mobile':'desktop',quality:qualityLevel,pixelRatio:renderer.getPixelRatio(),fps:Math.round(1000/frameAverage),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,lod:performanceModel.summary};},contactShadows:true,skyLightPaths:weather.lightPaths,get state(){return {view:currentView,walk,touring:tour.active,paused:tour.paused,step:tour.index,bag:tour.bag,balance:tour.balance,destination:tour.itinerary?.destination,position:camera.position.toArray(),rotation:[camera.rotation.x,camera.rotation.y],mainYaw:baseYaw,lookOffset:[tourYaw,tourPitch],recentering,liftFloor:model.atrium.lift.dockFloor,liftOpen:model.atrium.lift.open,ride:!!ride,driving:!!drive,cinema:model.runtime.rooms.find(r=>r.cinema)?.cinema?{level:model.runtime.rooms.find(r=>r.cinema).cinema.level,inside:model.runtime.rooms.find(r=>r.cinema).cinema.inside}:null,doors:model.runtime.doors.map(d=>d.open),peopleVisible:shoppers.group.visible};}};

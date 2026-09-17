@@ -6,7 +6,7 @@
   <title>水岸庭院 · 电脑漫游</title>
   <meta name="description" content="探索双翼弧形建筑、玻璃店铺与开放式庭院。可旋转、缩放，进入珠宝、潮玩、服装、餐厅、影院与扶梯中庭。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23162522'/%3E%3Cpath d='M5 10h8v14H5m14-14h8v14h-8M13 14h6' stroke='%23e4d1a6' stroke-width='2' fill='none'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css?v=11">
+  <link rel="stylesheet" href="./style.css?v=13">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
 </head>
 <body class="app-desktop">
@@ -42,6 +42,7 @@
     </div>
     <div class="view-tools"><button id="tour-start" class="tool primary-tour">一键逛街</button><button id="save-image" class="tool" aria-label="保存当前三维画面"><svg viewBox="0 0 24 24"><path d="M4 6h4l2-3h4l2 3h4v14H4z"/><circle cx="12" cy="13" r="4"/></svg><span>保存画面</span></button><button id="walk" class="tool" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M5 20V9l7-5 7 5v11M9 20v-7h6v7"/></svg><span>自由行走</span></button><button id="reset" class="tool" title="返回当前观察位置"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg><span>复位</span></button></div>
     <section id="tour-panel" hidden aria-label="自动逛街进度"><div class="tour-heading"><strong>跟着逛一圈</strong><span id="tour-step"></span></div><p id="tour-activity" role="status"></p><progress id="tour-progress" max="1" value="0"></progress><div class="tour-actions"><span id="tour-time"></span><select id="tour-speed" aria-label="漫游速度"><option value="1">1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><button id="tour-pause">暂停</button><button id="tour-stop">结束</button></div><p id="tour-bag"></p></section>
+    <button id="journey-recenter" hidden title="恢复沿路线平视（R）">回到主视角 <span>R</span></button>
     <div id="context-actions"><button id="cinema-toggle" hidden>开始放映 · 关闭顶灯</button><button id="drive-parking" hidden>驾驶体验 · 驶向出口</button></div>
     <div id="ride-status" hidden><span id="ride-status-label">正在前往电梯</span><button id="ride-cancel">停止跟随</button></div>
     <aside id="checkout-card" hidden aria-label="模拟收银"><span class="eyebrow">SHOPPING RECEIPT / 模拟账单</span><strong id="checkout-item"></strong><div id="checkout-price"></div><p id="checkout-balance"></p><small id="checkout-state"></small><span class="receipt-note">仅场景体验 · 不产生真实支付</span></aside>
@@ -53,6 +54,6 @@
     <dialog id="reference-dialog"><div class="dialog-header"><div><span class="eyebrow">REFERENCE / VISUAL DIRECTION</span><h2>参考与效果图</h2></div><button id="close-dialog" class="icon-button" aria-label="关闭">×</button></div><p>三维场景依据三张参考图推定比例与空间。屋顶配送站参考广州海珠城市微空港的场地组织。概念效果图用于对照氛围，并非当前网页的实景截图。</p><p>玩具店参考上海万象城玩具反斗城的分区体验理念；面包店结合用户草图与好利来空间案例进行概念设计，非品牌门店的测绘复刻。</p><p class="asset-sources"><a href="https://www.investsh.org.cn/cn/investsh/wstzdt/2026062614200488337547" target="_blank" rel="noopener">玩具反斗城万象城店资料</a> · <a href="https://alist.elledeco.cn/index/index/details.html?id=1183" target="_blank" rel="noopener">Holiland Travel 设计案例</a> · 场景资料：<a href="https://www.gz.gov.cn/zwfw/zxfw/ggfw/content/post_10610829.html" target="_blank" rel="noopener">广州城市微空港</a> · <a href="https://niulai.co/" target="_blank" rel="noopener">《牛来》表情图来源</a> · <a href="https://www.1905.com/mdb/film/2259215/" target="_blank" rel="noopener">A 厅海报：我想留在你身边</a> · <a href="https://www.1905.com/mdb/film/2258538/" target="_blank" rel="noopener">B 厅海报：燃烧吧！爸爸</a> · <a href="https://www.wanda.cn/2017/2017latest_1222/37525.html" target="_blank" rel="noopener">万达影院座椅与通道参考</a> · <a href="https://www.jiufangjituan.com/8kou.html" target="_blank" rel="noopener">充电柜结构参考</a> · <a href="https://www.chongdiantou.com/archives/1781779683508.html" target="_blank" rel="noopener">黄色充电宝外观参考</a></p><div class="reference-grid"><figure><img src="./assets/reference-front.jpg" alt="原始建筑正面参考图" loading="lazy"><figcaption>原始参考 · 建筑正面</figcaption></figure><figure><img src="./assets/reference-courtyard.jpg" alt="原始内部庭院参考图" loading="lazy"><figcaption>原始参考 · 庭院内街</figcaption></figure><figure><img src="./assets/reference-atrium.jpg" alt="通高中庭与层叠扶梯参考图" loading="lazy"><figcaption>新增参考 · 扶梯中庭</figcaption></figure><figure><img src="./assets/concept-front.png" alt="无人物建筑正面概念效果图" loading="lazy"><figcaption>概念效果图 · 建筑正面</figcaption></figure><figure><img src="./assets/concept-courtyard.png" alt="无人物精品商业内街概念效果图" loading="lazy"><figcaption>概念效果图 · 庭院内街</figcaption></figure></div></dialog>
   </main>
   <script>window.addEventListener('error',()=>{const p=document.getElementById('loading');if(p&&!p.classList.contains('done')){p.innerHTML='<strong>三维场景暂时无法加载</strong><span>请尝试刷新，或使用支持 WebGL 2 的浏览器。</span><button onclick="location.reload()">重新加载</button>';}});</script>
-  <script type="module" src="./app.js?v=11"></script>
+  <script type="module" src="./app.js?v=13"></script>
 </body>
 </html>

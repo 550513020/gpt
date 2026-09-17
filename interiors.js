@@ -1,12 +1,12 @@
-import { refineBakery,buildTwinCinema,refineSpa } from './venue-immersion.js?v=11';
-import { addBakery,addToySuperstore } from './retail-upgrades.js?v=11';
-import niulaiImage from './assets/niulai-image.js?v=11';
+import { refineBakery,buildTwinCinema,refineSpa } from './venue-immersion.js?v=13';
+import { addBakery,addToySuperstore } from './retail-upgrades.js?v=13';
+import niulaiImage from './assets/niulai-image.js?v=13';
 import * as THREE from './vendor/three.module.js';
-import { createMerchandise } from './merchandise.js?v=11';
-import { createRetailDetails } from './retail-detail.js?v=11';
-import { addSeafoodTank } from './water-features.js?v=11';
-import { planCustomerRoute } from './shop-routes.js?v=11';
-import { addVenueProps } from './mall-services.js?v=11';
+import { createMerchandise } from './merchandise.js?v=13';
+import { createRetailDetails } from './retail-detail.js?v=13';
+import { addSeafoodTank } from './water-features.js?v=13';
+import { planCustomerRoute } from './shop-routes.js?v=13';
+import { addVenueProps } from './mall-services.js?v=13';
 
 export const STORE_PLANS = {
   mainLeft:[
@@ -61,7 +61,7 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
   const titleColor=['cinema','ktv'].includes(spec.type)?'#eddfb8':'#f0e5ce';
   label(spec.name,cx,base+3.58,cz-d/2-.025,8.6,Math.PI,spec.accent,titleColor);
   function lineLight(x,z,width=1.8){box(M.warmGlow,x,base+3.86,z,width,.024,.035,0,false);}
-  function screen(text,x,y,z,width,height,bg='#182731',fg='#eee5cc'){
+  function screen(text,x,y,z,width,height,bg='#182731',fg='#eee5cc',film=null){
     (room.screens||=[]).push({x,y,z,width,height});
     if(typeof document==='undefined')return;
     const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=Math.round(1024*height/width);const c=canvas.getContext('2d');
@@ -69,7 +69,7 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
     c.strokeStyle=fg+'55';c.lineWidth=1;c.strokeRect(38,38,948,canvas.height-76);c.textAlign='center';c.fillStyle=fg;c.font='46px "Microsoft YaHei", sans-serif';
     const lines=text.split('\n');lines.forEach((t,i)=>c.fillText(t,512,canvas.height/2+(i-(lines.length-1)/2)*64));
     const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:t}));mesh.rotation.y=Math.PI;mesh.position.set(x,y,z);root.add(mesh);
-    if(spec.type==='cinema'&&width>6){const photo=new Image();photo.onload=()=>{c.fillStyle='#152128';c.fillRect(0,0,1024,canvas.height);const size=canvas.height-12;c.drawImage(photo,(1024-size)/2,6,size,size);c.textAlign='center';c.fillStyle='#f2deb8';c.font='bold 34px Microsoft YaHei';c.fillText('牛 来',160,canvas.height*.46);c.font='18px Microsoft YaHei';c.fillText('今日放映',160,canvas.height*.65);c.fillText('逛累了？坐下看会儿',840,canvas.height*.5);t.needsUpdate=true;};photo.src=niulaiImage;}
+    if(spec.type==='cinema'&&width>6){const photo=new Image();photo.onload=()=>{c.fillStyle='#152128';c.fillRect(0,0,1024,canvas.height);const size=canvas.height-12,pw=size*photo.width/photo.height;c.drawImage(photo,(1024-pw)/2,6,pw,size);c.textAlign='center';c.fillStyle='#f2deb8';c.font='bold 34px Microsoft YaHei';c.fillText(film?.title||'牛 来',160,canvas.height*.46);c.font='18px Microsoft YaHei';c.fillText('今日放映',160,canvas.height*.65);c.fillText('逛累了？坐下看会儿',840,canvas.height*.5);t.needsUpdate=true;};photo.src=film?.data||niulaiImage;}
     box(M.darkMetal,x,y,z+.075,width+.15,height+.15,.07);
   }
   function chair(x,y,z,angle=0,color=accent){
