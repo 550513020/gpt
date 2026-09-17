@@ -23,9 +23,9 @@ export function createRetailDetails(api,room){
   function mirror(x,z){
     const width=1.35,height=2.35;
     box(M.bronze,x,base+1.47,z+.025,width+.12,height+.12,.1);
-    const mesh=new Reflector(new THREE.PlaneGeometry(width,height),{color:0xddddda,textureWidth:384,textureHeight:640,clipBias:.003});mesh.position.set(x,base+1.47,z-.038);mesh.rotation.y=Math.PI;mesh.userData.excludeAO=true;
+    const mesh=new Reflector(new THREE.PlaneGeometry(width,height),{color:0xddddda,textureWidth:192,textureHeight:320,clipBias:.003,multisample:0});mesh.position.set(x,base+1.47,z-.038);mesh.rotation.y=Math.PI;mesh.userData.excludeAO=true;
     const render=mesh.onBeforeRender;let lastRender=-Infinity;
-    mesh.onBeforeRender=(renderer,scene,camera,...rest)=>{const now=performance.now();if(renderingMirror||scene.overrideMaterial||camera.position.distanceTo(mesh.position)>18||now-lastRender<120)return;renderingMirror=true;try{render(renderer,scene,camera,...rest);lastRender=now;}finally{renderingMirror=false;}};
+    mesh.onBeforeRender=(renderer,scene,camera,...rest)=>{const now=performance.now();if(mesh.userData.mirrorActive===false||renderingMirror||scene.overrideMaterial||camera.position.distanceTo(mesh.position)>18||now-lastRender<(mesh.userData.mirrorInterval||350))return;renderingMirror=true;try{render(renderer,scene,camera,...rest);lastRender=now;}finally{renderingMirror=false;}};
     root.add(mesh);room.mirrors.push({mesh,width,height});
   }
   function checkout(){
@@ -82,5 +82,5 @@ export function updateRetail(runtime,dt,time,camera,interiorOn){
   // Four real ceiling spots follow the nearest boutique; all other fixtures remain visible.
   const nearest=runtime.spots.filter(s=>Math.abs(camera.position.y-s.room.base-1.8)<4).sort((a,b)=>a.light.position.distanceToSquared(camera.position)-b.light.position.distanceToSquared(camera.position)).slice(0,4);
   for(const s of runtime.spots){const on=interiorOn&&nearest.includes(s)&&s.light.position.distanceTo(camera.position)<24;s.light.intensity=on?s.power:0;s.light.visible=on;s.cone.visible=on;}
-  for(const update of runtime.updates)update(dt,time);
+  for(const update of runtime.updates){if(update.position){const visible=update.position.distanceTo(camera.position)<(runtime.animationRadius||45);for(const g of update.groups||[])g.visible=visible;if(!visible)continue;}update(dt,time,camera);}
 }

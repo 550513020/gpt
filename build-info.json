@@ -1,23 +1,23 @@
 {
-  "edition": "riverside-20260910-v6",
-  "features": [
-    "mixed-retail",
-    "clear-escalator-landings",
-    "lift-ride",
-    "cloth-advertising",
-    "roof-garden-pitch",
-    "roof-stairs",
-    "unified-sun",
-    "dynamic-rain",
-    "automatic handle-free sliding doors",
-    "16 cashiers and furniture-aware circulation",
-    "summer fitting rooms and planar mirrors",
-    "secure display cases and ceiling spotlights",
-    "four distinct cuisines and live seafood tank",
-    "four storeys on all four wings",
-    "large cinema screen",
-    "animated atrium fountain"
+  "edition": "2026-09-17-v11",
+  "entries": [
+    "mobile.html",
+    "desktop.html"
   ],
-  "externalRuntimeDependencies": 0,
-  "updatedAt": "2026-09-10T01:14:37.877Z"
+  "features": [
+    "adaptive-LOD",
+    "twin-cinema",
+    "bakery-photo-stair",
+    "spa-mist",
+    "roof-umbrellas",
+    "east-west-escalators-to-RF",
+    "parking-drive-exit",
+    "variable-rain",
+    "glass-rain-streaks",
+    "48-cinema-armchairs",
+    "separate-recent-film-posters",
+    "hover-helicopter-pilot-tether",
+    "yellow-powerbank-slots",
+    "right-cafe-umbrellas"
+  ]
 }

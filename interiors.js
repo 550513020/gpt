@@ -1,20 +1,24 @@
+import { refineBakery,buildTwinCinema,refineSpa } from './venue-immersion.js?v=11';
+import { addBakery,addToySuperstore } from './retail-upgrades.js?v=11';
+import niulaiImage from './assets/niulai-image.js?v=11';
 import * as THREE from './vendor/three.module.js';
-import { createMerchandise } from './merchandise.js?v=6';
-import { createRetailDetails } from './retail-detail.js?v=6';
-import { addSeafoodTank } from './water-features.js?v=6';
-import { planCustomerRoute } from './shop-routes.js?v=6';
+import { createMerchandise } from './merchandise.js?v=11';
+import { createRetailDetails } from './retail-detail.js?v=11';
+import { addSeafoodTank } from './water-features.js?v=11';
+import { planCustomerRoute } from './shop-routes.js?v=11';
+import { addVenueProps } from './mall-services.js?v=11';
 
 export const STORE_PLANS = {
   mainLeft:[
     {type:'jewelry',name:'璟序珠宝 · JING',wall:'#e0d5bf',floor:'#d6ccba',accent:'#44665e'},
     {type:'clothes',name:'叙织 · TEXTURE STUDIO',wall:'#dfded4',floor:'#c3bba9',accent:'#7b8373'},
     {type:'hotpot',name:'山隐 · 铜锅火锅',wall:'#996b4d',floor:'#858474',accent:'#733d2a'},
-    {type:'cinema',name:'光幕 · LUMEN CINEMA',wall:'#363a42',floor:'#34333b',accent:'#854645'}
+    {type:'ktv',name:'星屿 · STAR KTV',wall:'#424253',floor:'#373643',accent:'#725775'}
   ],
   mainRight:[
-    {type:'toys',name:'MOMO · 杂物社',wall:'#bcd1cf',floor:'#d4d8cb',accent:'#de916a'},
+    {type:'toys',name:'TOYS R US · 玩具反斗城',superstore:true,wall:'#bcd1cf',floor:'#d4d8cb',accent:'#de916a'},
     {type:'bags',name:'PELLE · 皮具工坊',wall:'#ac9275',floor:'#d1c0a8',accent:'#765038'},
-    {type:'bistro',name:'炉边 · EMBER BISTRO',wall:'#b47b63',floor:'#a3977b',accent:'#496557'},
+    {type:'bakery',name:'麦屿 · BAKE & COFFEE',wall:'#dddccd',floor:'#c4c7ba',accent:'#79978b'},
     {type:'ktv',name:'回声 · ECHO KTV',wall:'#3c394c',floor:'#343344',accent:'#5c627f'}
   ],
   gardenLeft:[
@@ -27,13 +31,13 @@ export const STORE_PLANS = {
     {type:'toys',name:'TOY LAB · 收藏实验室',wall:'#c8c3d7',floor:'#dcdae0',accent:'#8c87a2'},
     {type:'clothes',name:'LINEN · 日常衣橱',wall:'#d9c6b5',floor:'#c0a38c',accent:'#a38572'},
     {type:'japanese',name:'凪 · 寿司割烹',wall:'#c5b394',floor:'#a49984',accent:'#495b55'},
-    {type:'ktv',name:'星屿 · STAR KTV',wall:'#424253',floor:'#373643',accent:'#725775'}
+    {type:'cinema',name:'光幕 · LUMEN CINEMA',wall:'#080a0e',floor:'#090b0e',accent:'#23131a'}
   ]
 };
 export function storeFor(cx,floor,secondary){return STORE_PLANS[(secondary?'garden':'main')+(cx<0?'Left':'Right')][floor];}
 
 export function createRetailRoom(api,cx,base,cz,w,d,spec){
-  const room={cx,base,cz,w,d,spec,entry:{x:cx,z:cz-d/2,width:2.8},blockers:[],secureCases:[],spotlights:[],mirrors:[],fittingRooms:[]};api.runtime.rooms.push(room);
+  const room={cx,base,cz,w,d,spec,entry:{x:cx,z:cz-d/2,width:2.8},blockers:[],garments:[],secureCases:[],spotlights:[],mirrors:[],fittingRooms:[]};api.runtime.rooms.push(room);
   const remember=(x,y,z,width,height,depth,rotation=0)=>{
     if(width>.2&&depth>.2&&height>.13&&y-height/2<base+1.7&&y+height/2>base+.34){
       const c=Math.abs(Math.cos(rotation)),s=Math.abs(Math.sin(rotation));room.blockers.push({x,z,w:width*c+depth*s,d:depth*c+width*s});
@@ -48,7 +52,7 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
   const wall=material(spec.wall,.88,0,{normalMap:M.concrete.normalMap||null,normalScale:new THREE.Vector2(.055,.055)});
   const floor=material(spec.floor,theatre?.95:.68,0,{map:theatre?null:M.marble.map,normalMap:M.marble.normalMap||null,normalScale:new THREE.Vector2(.11,.11),roughnessMap:M.marble.roughnessMap||null});
   const accent=material(spec.accent,.76,0,{normalMap:M.tan.normalMap||null,normalScale:new THREE.Vector2(.22,.22),roughnessMap:M.tan.roughnessMap||null});
-  const timber=material(spec.type==='hotpot'?'#c79a74':'#d1b18a',.78,0,{map:M.wood.map,normalMap:M.wood.normalMap||null,normalScale:new THREE.Vector2(.25,.25),roughnessMap:M.wood.roughnessMap||null});
+  const timber=material(spec.type==='cinema'?'#151519':spec.type==='hotpot'?'#c79a74':'#d1b18a',.78,0,{map:M.wood.map,normalMap:M.wood.normalMap||null,normalScale:new THREE.Vector2(.25,.25),roughnessMap:M.wood.roughnessMap||null});
   const back=cz+d/2-1,front=cz-d/2+1.4;
   slab(floor,cx,base+.065,cz,w-.5,d-.5,1.7,.05);
   box(wall,cx,base+1.85,back+.48,w-1,3.6,.22);
@@ -65,7 +69,8 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
     c.strokeStyle=fg+'55';c.lineWidth=1;c.strokeRect(38,38,948,canvas.height-76);c.textAlign='center';c.fillStyle=fg;c.font='46px "Microsoft YaHei", sans-serif';
     const lines=text.split('\n');lines.forEach((t,i)=>c.fillText(t,512,canvas.height/2+(i-(lines.length-1)/2)*64));
     const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:t}));mesh.rotation.y=Math.PI;mesh.position.set(x,y,z);root.add(mesh);
-    box(M.darkMetal,x,y,z+.035,width+.15,height+.15,.07);
+    if(spec.type==='cinema'&&width>6){const photo=new Image();photo.onload=()=>{c.fillStyle='#152128';c.fillRect(0,0,1024,canvas.height);const size=canvas.height-12;c.drawImage(photo,(1024-size)/2,6,size,size);c.textAlign='center';c.fillStyle='#f2deb8';c.font='bold 34px Microsoft YaHei';c.fillText('牛 来',160,canvas.height*.46);c.font='18px Microsoft YaHei';c.fillText('今日放映',160,canvas.height*.65);c.fillText('逛累了？坐下看会儿',840,canvas.height*.5);t.needsUpdate=true;};photo.src=niulaiImage;}
+    box(M.darkMetal,x,y,z+.075,width+.15,height+.15,.07);
   }
   function chair(x,y,z,angle=0,color=accent){
     const pt=(lx,lz)=>[x+lx*Math.cos(angle)+lz*Math.sin(angle),z-lx*Math.sin(angle)+lz*Math.cos(angle)];
@@ -99,13 +104,16 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
     const outline=kind===1||kind===2?[[-.28,0],[-.3,hem],[-.05,hem],[0,hem*.32],[.05,hem],[.3,hem],[.28,0]]:kind===3?[[-.13,0],[-.22,-.04],[-.19,-.36],[-.4,hem],[.4,hem],[.19,-.36],[.22,-.04],[.13,0],[0,-.08]]:[[-.11,0],[-.3,-.08],[-.48,-.24],[-.36,-.35],[-.25,-.24],[-.29,hem],[.29,hem],[.25,-.24],[.36,-.35],[.48,-.24],[.3,-.08],[.11,0],[0,-.055]];
     outline.forEach((p,i)=>i?shape.lineTo(...p):shape.moveTo(...p));shape.closePath();
     const inventory=api.stats.inventory,name=['summerTshirt','shorts','linenTrousers','summerDress','summerBlouse'][kind];inventory[name]=(inventory[name]||0)+1;
-    const g=new THREE.ExtrudeGeometry(shape,{depth:.045,bevelEnabled:true,bevelSize:.013,bevelThickness:.012,bevelSegments:1,steps:1});inst(g,color,x,y,z);
+    const g=new THREE.ExtrudeGeometry(shape,{depth:.045,bevelEnabled:true,bevelSize:.013,bevelThickness:.012,bevelSegments:1,steps:1});g.scale(.8,1,1);inst(g,color,x,y,z);
+    room.garments.push({x,y,z,width:.8,depth:.08,hem});
     if(kind!==1&&kind!==2)for(let j=-1;j<=1;j++)box(color,x+j*.13,y+hem*.58,z-.025,.02,Math.abs(hem)*.6,.012);
     const a=new THREE.Vector3(x-.29,y+.01,z),b=new THREE.Vector3(x,y+.17,z),c=new THREE.Vector3(x+.29,y+.01,z);tube(a,b,.008,M.bronze);tube(b,c,.008,M.bronze);tube(a,c,.008,M.bronze);inst(unitTorus,M.gold,x,y+.215,z,.039,.039,.039);
   }
   function sofa(x,y,z,width=2.6,color=accent){slab(color,x,y+.22,z,width,.86,.16,.3);box(color,x,y+.76,z+.36,width,.66,.16);for(const dx of [-width/2+.08,width/2-.08])box(color,x+dx,y+.6,z,.16,.52,.83);box(M.darkMetal,x,y+.1,z,width-.25,.17,.62);}
 
-  if(['jewelry','toys','bags'].includes(spec.type)){
+  if(spec.superstore){addToySuperstore({...api,box,slab},room);
+  }else if(spec.type==='bakery'){addBakery({...api,box,slab},room);refineBakery({...api,box,slab},room);
+  }else if(['jewelry','toys','bags'].includes(spec.type)){
     const jewelry=spec.type==='jewelry',toys=spec.type==='toys';
     const bays=jewelry?4:toys?6:3;
     for(let b=0;b<bays;b++){
@@ -157,7 +165,7 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
       room.blockers.push({x:cx+dx,z:cz+dz,w:4.3,d:.65});
       for(const sx of [-1.9,1.9]){box(M.bronze,cx+dx+sx,base+1.23,cz+dz,.035,2.2,.035);box(M.darkMetal,cx+dx+sx,base+.15,cz+dz,.12,.07,.65);}
       tube(new THREE.Vector3(cx+dx-1.9,base+2.32,cz+dz),new THREE.Vector3(cx+dx+1.9,base+2.32,cz+dz),.025,M.bronze);
-      for(let j=0;j<7;j++)garment(cx+dx+(j-3)*.48,base+2.08,cz+dz,fabric[(j+(dx>0?2:0))%5],j);
+      for(let j=0;j<4;j++)garment(cx+dx+(j-1.5)*.96,base+2.08,cz+dz,fabric[(j+(dx>0?2:0))%5],j+(dz>0?2:0));
     }
     slab(M.marble,cx,base+.1,cz,3,1.6,.18,.72);for(let j=0;j<3;j++)for(let k=0;k<4;k++)box(fabric[(j+k)%5],cx+(j-1)*.82,base+.88+k*.085,cz,.62,.075,.82);
     detail.fitting();
@@ -198,21 +206,15 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
     label('粤式点心 · 烧味 · 清蒸时蔬',cx,base+3.15,back-.2,5.5,Math.PI,spec.accent,'#f4e3b8');
     for(const dx of [-4.2,4.2])for(let i=0;i<10;i++)box(timber,cx+dx-1.5+i*.33,base+1.8,cz+.05,.055,3.2,.12);
   }else if(spec.type==='cinema'){
-    screen('LUMEN CINEMA\n潮 汐 之 后 · 即 将 放 映',cx,base+2.19,back-.1,16.6,3.28,'#293d50','#e4c798');
-    for(let row=0;row<4;row++){
-      const z=cz+1.7-row*1.55,y=base+.13+row*.18;api.box(M.darkMetal,cx,y-.025,z,14.4,.12+row*.06,1.5);
-      for(const side of [-1,1])for(let seat=0;seat<5;seat++)chair(cx+side*(1.45+seat*1.12),y,z,Math.PI,accent);
-      for(const dx of [-7.4,0,7.4])box(M.warmGlow,cx+dx,y+.018,z-.69,.06,.018,1.35,0,false);
-    }
-    for(const side of [-1,1])for(let j=0;j<11;j++)box(M.darkMetal,cx+side*(w/2-.7),base+1.95,cz-d/2+2+j*1.12,.13,3.6,.27);
-    screen('光幕\nCINEMA\n今日放映',cx+8.2,base+1.94,front+.3,1.18,2.2,'#724533');
+    buildTwinCinema({...api,box,slab},room,chair,screen,accent);
   }else if(spec.type==='spa'){
     for(const dx of [-4.4,4.4])for(const dz of [-1.8,3.3]){
       const x=cx+dx,z=cz+dz;sofa(x,base,z,2.5,accent);slab(M.ivory,x,base+.22,z-.65,2.4,.95,.15,.23);
       for(const off of [-.6,.6]){inst(unitCylinder,M.walnut,x+off,base+.35,z-1.5,.32,.48,.32);inst(unitCylinder,M.water,x+off,base+.57,z-1.5,.27,.018,.27);}
       box(timber,x+1.5,base+.52,z,.55,.78,.7);for(let j=0;j<3;j++)box(M.ivory,x+1.5,base+.95+j*.075,z,.38,.065,.49);
-      for(let j=0;j<10;j++)box(timber,x-1.9,base+1.6,z-1.2+j*.28,.06,2.9,.08);
+      for(let j=0;j<10;j++)box(timber,x+Math.sign(dx)*1.9,base+1.6,z-1.2+j*.28,.06,2.9,.08);
     }
+    refineSpa({...api,box,slab},room);
     box(timber,cx,base+.6,back-.7,3.0,1,.85);label('沐禾 · 足浴 / 茶疗 / 放松',cx,base+3.0,back-.21,4.7,Math.PI,spec.accent,'#f4e7cc');
   }else if(spec.type==='ktv'){
     const ledPink=material('#db83ae',.4,0,{emissive:'#d558a1',emissiveIntensity:.75}),ledBlue=material('#86bcd3',.4,0,{emissive:'#629bd2',emissiveIntensity:.65});
@@ -235,6 +237,7 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
   }
   if(spec.type==='hotpot')room.menu=['beef','mushrooms','greens','shrimp','tofu','meatballs','lotus'];
   detail.checkout();
+  addVenueProps(api,room);
   room.route=planCustomerRoute(room,root,api.runtime.routes);
   return room;
 }
