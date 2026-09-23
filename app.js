@@ -208,11 +208,12 @@ if(isMobile){document.querySelector('.material-panel').classList.add('collapsed'
 setView(LOCATIONS[location.hash.slice(1)]?location.hash.slice(1):'front',true);setLight('day');applyQuality(qualityLevel);
 function animate(time){
   if(document.hidden){lastTime=time;requestAnimationFrame(animate);return;}
-  const frameMs=time-lastTime;frameAverage=frameAverage*.97+Math.min(frameMs,200)*.03;frameCount++;
+  // A queued RAF can predate the visibilitychange timestamp on a slow first load.
+  const frameMs=Math.max(0,time-lastTime);frameAverage=frameAverage*.97+Math.min(frameMs,200)*.03;frameCount++;
   if(qualityChoice==='auto'&&frameCount>180){slowFrames=frameAverage>36?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90&&qualityLevel!=='low'){applyQuality('low');slowFrames=0;}if(slowFrames>240&&pixelScale>.7){pixelScale=.7;sizeRenderer();slowFrames=0;}}
   if(performanceModel.tick(camera,time/1000))renderer.shadowMap.needsUpdate=true;
   const underground=camera.position.y<-.6;scene.fog=underground?null:outdoorFog;for(const l of model.parking.lights)l.visible=underground&&Math.abs(l.position.y-camera.position.y)<2.3;
-  const dt=Math.min((time-lastTime)/1000,.15);lastTime=time;
+  const dt=Math.min(frameMs/1000,.15);lastTime=time;
   if(!$('reference-dialog').open){if(transition){const t=THREE.MathUtils.clamp((time-transition.start)/1700,0,1);const ease=t*t*(3-2*t);camera.position.lerpVectors(transition.from,transition.to,ease);controls.target.lerpVectors(transition.fromTarget,transition.toTarget,ease);if(t===1)transition=null;}
     if(tour.active){if(tour.paused&&lastPose)applyJourneyPose(lastPose,dt);const pose=tour.tick(dt,Number($('tour-speed').value));if(pose){applyJourneyPose(pose,dt);updateTourUI(pose);if(pose.done){$('journey-recenter').hidden=true;$('tour-pause').disabled=true;$('tour-time').textContent='本次逛街已完成 · 全部为模拟体验';captureLook();currentView='courtyard';walkUI(true);$('checkout-card').hidden=$('time-card').hidden=true;freeAltitude=false;renderer.domElement.focus();$('view-title').textContent=tour.itinerary.destination?'已到达 · '+LOCATIONS[tour.itinerary.destination].title:'逛街完成';}}}
     else if(ride)tickRide(dt);else if(drive)tickDrive(dt);else if(walk)stepWalk(dt);else controls.update();
