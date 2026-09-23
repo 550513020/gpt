@@ -1,15 +1,19 @@
-import { refineRoof } from './venue-immersion.js?v=13';
-import { buildSpatialBatches } from './performance.js?v=13';
-import { buildParking,perforatedSlab,SHAFTS,VEHICLE_RAMP } from './parking.js?v=13';
+import {buildWaterGardens} from './water-gardens.js?v=15';
+import {addPlantVariety} from './landscape-variety.js?v=15';
+import {buildStreetConnection} from './streets.js?v=15';
+import {BAKERY_PLAN} from './bakery-layout.js?v=15';
+import { refineRoof } from './venue-immersion.js?v=15';
+import { buildSpatialBatches } from './performance.js?v=15';
+import { buildParking,perforatedSlab,SHAFTS,VEHICLE_RAMP } from './parking.js?v=15';
 import * as THREE from './vendor/three.module.js';
-import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js?v=13';
-import { buildAtrium } from './atrium.js?v=13';
-import { buildRooftop } from './rooftop.js?v=13';
-import { addAutomaticDoor,updateRetail } from './retail-detail.js?v=13';
-import { addFountain } from './water-features.js?v=13';
-import { addMallServices } from './mall-services.js?v=13';
-import { buildExpressLift } from './express-lift.js?v=13';
-import { buildAirTerraces } from './air-terraces.js?v=13';
+import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js?v=15';
+import { buildAtrium } from './atrium.js?v=15';
+import { buildRooftop } from './rooftop.js?v=15';
+import { addAutomaticDoor,updateRetail } from './retail-detail.js?v=15';
+import { addFountain } from './water-features.js?v=15';
+import { addMallServices } from './mall-services.js?v=15';
+import { buildExpressLift } from './express-lift.js?v=15';
+import { buildAirTerraces } from './air-terraces.js?v=15';
 
 // Model coordinates are metres, estimated from the three supplied photographs.
 export const LOCATIONS = {
@@ -21,8 +25,13 @@ export const LOCATIONS = {
   toys:{eye:[15.6,1.9,-4.2],target:[15,1.6,4.5],title:'1F · 玩具反斗城',description:'赛车试驾、模型、积木与亲子体验区'},
   clothes:{eye:[-16,6.6,-4.8],target:[-16,6.4,3],title:'2F · 叙织服装',description:'独立衣架、叠装陈列与试衣区'},
   bags:{eye:[16,6.6,-4.8],target:[16,6.4,3],title:'2F · PELLE 皮具',description:'皮具展示台与休憩洽谈区'},
-  hotpot:{eye:[-16,11.2,-6.7],target:[-16,10.9,2.9],title:'3F · 山隐火锅',description:'铜锅餐桌、木饰面与排烟装置'},
-  bakery:{eye:[16,11,-5.9],target:[18,10.8,4.9],title:'3F · 麦屿面包店',description:'环形选购、现烤岛台、冷藏甜点与咖啡座'},
+  hotpot:{eye:[-20.9,11,-2.6],target:[-15,10.9,2.7],fov:60,title:'3F · 海底捞',description:'迎宾前台与屏风、靠背卡座、鸳鸯锅和自选小料台'},
+  bakery:{eye:[9.65,11,-6.1],target:[16.8,10.9,3.7],title:'3F · 麦屿面包店',description:'右侧入口与长冰柜、后墙单收银台、前侧红色旋梯'},
+  bakerystair:{eye:[15.3,12.1,.3],target:[16.55,10.9,-6],fov:52,title:'3F · 红色旋梯打卡',description:'加宽旋梯、奶油色背景与柔和拱形灯光'},
+  street:{eye:[39,1.7,-30],target:[44,1.7,-40],fov:60,title:'地面道路与停车出口',description:'B1 / B2 连续坡道、城市道路、斑马线与红绿灯'},
+  watergarden:{eye:[-26.8,2.45,-27.8],target:[-32,.6,-21.5],fov:60,title:'水岸花园 · 休息水庭',description:'石材浅水池、木座椅与靠近唤醒的轻柔涌泉'},
+  cinematickets:{eye:[11.8,16.1,17.7],target:[8.7,15.3,18.2],fov:85,title:'4F · 影院售票与检票',description:'独立售票前台、双厅扫码闸机和当季热门电影海报'},
+  cinemasnacks:{eye:[18.5,15.55,19.03],target:[18.5,15.55,16.8],fov:76,title:'4F · 可乐与爆米花柜台',description:'玻璃柜里的纸桶爆米花、现接可乐与取餐台'},
   cinema:{eye:[9.45,17,23],target:[9.45,16.45,31.05],title:'4F · 光幕影院',description:'A / B 双厅、独立通道、入场灯与暗场放映'},
   ktv:{eye:[16,15.85,-5],target:[20,16.0,3.9],title:'4F · 回声 KTV',description:'独立包厢、沙发与点唱屏幕'},
   chinese:{eye:[-13.8,11.15,17],target:[-13.8,11.0,28],title:'3F · 青庭中餐',description:'粤式点心、烧味与茶台'},
@@ -211,19 +220,20 @@ export function createArchitecture({maps={},optimize=false}={}){
         box(mats.wood,tx+x,base+3.984,cz,.105,.065,reach*2-.12);
       }
       slab(mats.slabTop,tx,base+4.565,cz,tw-.15,td-.15,4.1,.03);
-      const entryGap={edge:'front',min:-1.4,max:1.4};
+      const entryX=storeFor(cx,floor,secondary).type==='bakery'?-BAKERY_PLAN.entryX:0;
+      const entryGap={edge:'front',min:entryX-1.4,max:entryX+1.4};
       glassPerimeter(cx,base+.21,cz,w,d,2.6,3.72,glazing,entryGap);
-      const transom=new THREE.Mesh(new THREE.PlaneGeometry(2.8,.9),glazing);transom.position.set(cx,base+3.48,cz-d/2);glassGroup.add(transom);
-      for(const dx of [-1.43,1.43])box(mats.bronze,cx+dx,base+1.67,cz-d/2,.05,2.92,.07);
+      const transom=new THREE.Mesh(new THREE.PlaneGeometry(2.8,.9),glazing);transom.position.set(cx+entryX,base+3.48,cz-d/2);glassGroup.add(transom);
+      for(const dx of [-1.43,1.43])box(mats.bronze,cx+entryX+dx,base+1.67,cz-d/2,.05,2.92,.07);
       // Thin horizontal champagne transoms, darker structural columns.
       railPerimeter(cx,base+3.29,cz,w+.02,d+.02,2.6);
       railPerimeter(cx,base+.2,cz,w+.02,d+.02,2.6,entryGap);
       for(let k=-3;k<=3;k++)for(const direction of [-1,1]){
-        if(k===0&&direction===-1)continue;
+        if(direction===-1&&Math.abs(k*(w-5.2)/6-entryX)<1.43)continue;
         const xx=cx+k*(w-5.2)/6,zz=cz+direction*d/2;box(k%3===0?mats.darkMetal:mats.bronze,xx,base+2.17,zz,.07,3.86,.12);
       }
       for(let j=-1;j<=1;j++)for(const direction of [-1,1])box(mats.bronze,cx+direction*w/2,base+2.13,cz+j*(d-4.8)/3,.11,3.84,.065);
-      for(const dx of [-w*.31,w*.31]){box(mats.darkMetal,cx+dx,base+2.13,cz-d/2-.2,.34,3.9,.45);box(mats.bronze,cx+dx-.13,base+2.14,cz-d/2-.445,.05,3.92,.025);}
+      for(const nominal of [-w*.31,w*.31]){const dx=entryX&&Math.abs(nominal-entryX)<1.7?entryX-Math.sign(entryX)*1.7:nominal;box(mats.darkMetal,cx+dx,base+2.13,cz-d/2-.2,.34,3.9,.45);box(mats.bronze,cx+dx-.13,base+2.14,cz-d/2-.445,.05,3.92,.025);}
       if(floor>0){
         const connectorX=(cx<0?-20:20)-tx;
         const accessGap=[{edge:secondary?'front':'rear',min:connectorX-2.35,max:connectorX+2.35}];
@@ -327,6 +337,7 @@ export function createArchitecture({maps={},optimize=false}={}){
   const fountain=addFountain({root,glassGroup,inst,mats,unitCylinder,unitTorus,runtime});
   const facilityApi={root,box,slab,inst,sphere,tube,glassGroup,mats,balustrade,glazing,vitrine,unitCylinder,unitTorus,label,runtime,glassPerimeter,railPerimeter};
   const services=addMallServices(facilityApi),air=buildAirTerraces(facilityApi),express=buildExpressLift(facilityApi),parking=buildParking(facilityApi);
+  buildStreetConnection(facilityApi,parking);addPlantVariety(facilityApi);const waterGardens=buildWaterGardens(facilityApi);
   stats.escalators=atrium.flights.length;stats.atriumLevels=5;
   if(optimize)buildSpatialBatches(batches,root);else for(const batch of batches.values()){
     const mesh=new THREE.InstancedMesh(batch.geo,batch.mat,batch.matrices.length);
@@ -334,5 +345,5 @@ export function createArchitecture({maps={},optimize=false}={}){
   }
   root.updateMatrixWorld(true);
   stats.automaticDoors=runtime.doors.length;stats.cashiers=runtime.rooms.filter(r=>r.checkout).length;stats.fittingRooms=runtime.rooms.reduce((n,r)=>n+r.fittingRooms.length,0);stats.rearStoreys=4;
-  return {root,glassGroup,glazing,balustrade,vitrine,mats,emissives,stats,atrium,roof,services,air,express,parking,runtime,fountain,update:(dt,time,camera,on)=>updateRetail(runtime,dt,time,camera,on)};
+  return {root,glassGroup,glazing,balustrade,vitrine,mats,emissives,stats,atrium,roof,services,air,express,parking,runtime,fountain,waterGardens,update:(dt,time,camera,on)=>updateRetail(runtime,dt,time,camera,on)};
 }

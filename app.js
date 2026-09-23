@@ -1,19 +1,19 @@
-import { createScenePerformance } from './performance.js?v=13';
+import { createScenePerformance } from './performance.js?v=15';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import { Sky } from 'three/addons/Sky.js';
-import { createArchitecture, LOCATIONS } from './scene.js?v=13';
-import { stairWalkingHeight } from './atrium.js?v=13';
-import { loadSurfaceMaps } from './materials.js?v=13';
-import { createLightingPipeline } from './lighting.js?v=13';
-import { circulationHeight } from './circulation.js?v=13';
-import { enhanceSky,createWeather,sunDirection } from './weather.js?v=13';
-import { createMallNavigator,levelAt,LEVELS } from './mall-navigation.js?v=13';
-import { createLiftJourney,setLiftPose } from './lift-journey.js?v=13';
-import { createDaylightBalance } from './daylight.js?v=13';
-import { angleDelta } from './journey-view.js?v=13';
-import { createShoppingTour } from './mall-tour.js?v=13';
-import { addShoppers } from './shoppers.js?v=13';
+import { createArchitecture, LOCATIONS } from './scene.js?v=15';
+import { stairWalkingHeight } from './atrium.js?v=15';
+import { loadSurfaceMaps } from './materials.js?v=15';
+import { createLightingPipeline } from './lighting.js?v=15';
+import { circulationHeight } from './circulation.js?v=15';
+import { enhanceSky,createWeather,sunDirection } from './weather.js?v=15';
+import { createMallNavigator,levelAt,LEVELS } from './mall-navigation.js?v=15';
+import { createLiftJourney,setLiftPose } from './lift-journey.js?v=15';
+import { createDaylightBalance } from './daylight.js?v=15';
+import { angleDelta } from './journey-view.js?v=15';
+import { createShoppingTour } from './mall-tour.js?v=15';
+import { addShoppers } from './shoppers.js?v=15';
 
 const $=id=>document.getElementById(id);
 const container=$('viewport');
@@ -73,11 +73,10 @@ function setLight(mode){
 function setInterior(on){interiorOn=on;daylight.set(lightMode,on);if(!on)daylight.tick(0,camera);}
 
 function viewPosition(key){const data=LOCATIONS[key];const eye=new THREE.Vector3(...data.eye),target=new THREE.Vector3(...data.target);if(['front','aerial','roof'].includes(key)){const factor=Math.max(1,(isMobile?1.12:1.75)/(innerWidth/innerHeight));eye.sub(target).multiplyScalar(factor).add(target);}return {eye,target};}
-function journeyLens(active){camera.fov=isMobile?(innerWidth<innerHeight?66:58):active?58:44;camera.updateProjectionMatrix();}
+function journeyLens(active){camera.fov=active?(isMobile&&innerWidth<innerHeight?66:58):(LOCATIONS[currentView]?.fov??(isMobile?(innerWidth<innerHeight?66:58):44));camera.updateProjectionMatrix();}
 function setView(key,immediate=false){
-  journeyLens(false);
   stopJourney(false);controls.enabled=true;document.body.classList.remove('immersive');setMenu(false);
-  if(walk)setWalk(false);currentView=key;history.replaceState(null,'','#'+key);const data=LOCATIONS[key],p=viewPosition(key);
+  if(walk)setWalk(false);currentView=key;journeyLens(false);history.replaceState(null,'','#'+key);const data=LOCATIONS[key],p=viewPosition(key);
   $('store-view').value=[...$('store-view').options].some(o=>o.value===key)?key:'';
   $('navigate-destination').disabled=$('preview-destination').disabled=!$('store-view').value;
   $('view-title').textContent=data.title;$('view-description').textContent=data.description;$('location-index').textContent=String(Object.keys(LOCATIONS).indexOf(key)+1).padStart(2,'0');
@@ -148,8 +147,8 @@ function beginDrive(){
 function tickDrive(dt){
   drive.distance=Math.min(drive.route.length,drive.distance+dt*5.8);const p=drive.distance/drive.route.length*(drive.route.points.length-1),i=Math.floor(p),points=drive.route.points;
   const position=points[i].clone().lerp(points[Math.min(i+1,points.length-1)],p-i),look=points[Math.min(i+15,points.length-1)].clone();if(position.distanceTo(look)<.1)look.x+=3;
-  applyJourneyPose({position,look,kind:'drive'},dt);$('ride-status-label').textContent='沿车道驶向出口 · 约 21 km/h · 可拖动环顾';
-  if(drive.distance>=drive.route.length){const floor=drive.route.floor;drive=null;camera.position.y=LEVELS[floor]+1.7;captureLook();walkUI(true);freeAltitude=false;$('ride-status').hidden=true;notice('已到达停车场出口通道，外侧道路暂未构建。');}
+  applyJourneyPose({position,look,kind:'drive'},dt);$('ride-status-label').textContent='沿连续坡道驶向地面道路 · 可拖动环顾';
+  if(drive.distance>=drive.route.length){const floor=drive.route.endFloor??drive.route.floor;drive=null;camera.position.y=LEVELS[floor]+1.7;captureLook();walkUI(true);freeAltitude=false;$('ride-status').hidden=true;notice('已沿坡道驶出停车场，到达地面道路。');}
 }
 $('drive-parking').addEventListener('click',beginDrive);
 $('cinema-toggle').addEventListener('click',()=>{const c=model.runtime.rooms.find(r=>r.cinema)?.cinema;if(c)c.mode=c.level>.4?'watch':'entry';});
@@ -173,6 +172,7 @@ $('journey-recenter').addEventListener('click',()=>{recentering=true;renderer.do
 $('people').addEventListener('change',e=>shoppers.group.visible=e.target.checked);
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 document.querySelectorAll('[data-light]').forEach(b=>b.addEventListener('click',()=>setLight(b.dataset.light)));
+$('water-season').addEventListener('change',e=>{model.waterGardens.setMode(e.target.value);notice(e.target.selectedOptions[0].textContent);});
 $('reflection').addEventListener('input',e=>{reflectivity=e.target.value/100;$('reflection-value').value=e.target.value+'%';updateReflection();});
 $('interior').addEventListener('change',e=>setInterior(e.target.checked));
 $('routes').addEventListener('change',e=>model.runtime.routes.visible=e.target.checked);
@@ -197,7 +197,7 @@ renderer.domElement.addEventListener('wheel',()=>transition=null,{passive:true})
 window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='r'&&tour.active&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)){recentering=true;e.preventDefault();return;}if($('reference-dialog').open||['INPUT','BUTTON','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;const key=e.key.length===1?e.key.toLowerCase():e.key;if(walk&&['w','a','s','d','q','e','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Shift'].includes(key)){keys.add(key);e.preventDefault();}if(e.key==='Escape'){if(tour.active||ride||drive)setWalk(true);else if(walk)setWalk(false);}});
 window.addEventListener('keyup',e=>keys.delete(e.key.length===1?e.key.toLowerCase():e.key));window.addEventListener('blur',()=>{keys.clear();drag=null;});
 const stepKeys={forward:'w',back:'s',left:'a',right:'d'};document.querySelectorAll('[data-step]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();keys.add(stepKeys[b.dataset.step]);b.setPointerCapture(e.pointerId);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,()=>keys.delete(stepKeys[b.dataset.step]));});
-function sizeRenderer(){camera.aspect=innerWidth/innerHeight;camera.fov=isMobile?(innerWidth<innerHeight?66:58):(walk||tour.active||ride||drive)?58:44;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));composer.setSize(innerWidth,innerHeight);}
+function sizeRenderer(){camera.aspect=innerWidth/innerHeight;journeyLens(walk||tour.active||ride||drive);renderer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(Math.min(devicePixelRatio,pixelScale));composer.setSize(innerWidth,innerHeight);}
 function applyQuality(level){qualityLevel=level;pixelScale=level==='low'?(isMobile?.85:.9):level==='high'?1.35:(isMobile?1:1.15);performanceModel.setQuality(level);composer.ambientOcclusion.enabled=level==='high';const shadow=level==='high'?2048:level==='low'?1024:1536;sun.shadow.mapSize.set(shadow,shadow);sun.shadow.map?.dispose();sun.shadow.map=null;renderer.shadowMap.needsUpdate=true;sizeRenderer();$('quality-status').textContent=qualityChoice==='auto'?(level==='low'?'自动 · 流畅优先':'自动 · 均衡画质'):(level==='low'?'流畅优先':level==='high'?'清晰画质':'均衡画质');}
 $('quality').addEventListener('change',e=>{qualityChoice=e.target.value;slowFrames=0;applyQuality(qualityChoice==='auto'?(isMobile?'low':'balanced'):qualityChoice);});
 window.addEventListener('resize',()=>{sizeRenderer();if(!walk&&!tour.active&&!ride&&!drive&&['front','aerial','roof'].includes(currentView)){const p=viewPosition(currentView);camera.position.copy(p.eye);controls.target.copy(p.target);controls.update();}});
@@ -227,4 +227,4 @@ function animate(time){
 }
 model.update(0,0,camera,true);performanceModel.tick(camera,0,true);renderer.compile(scene,camera);composer.render();$('loading').classList.add('done');setTimeout(()=>$('loading').hidden=true,700);requestAnimationFrame(animate);
 // Expose only a compact scene summary, useful for troubleshooting a user report.
-window.riversideScene={edition:'v13',get daylight(){return daylight.summary;},stats:model.stats,threeVersion:THREE.REVISION,materialMaps:surfaces.loaded,get performance(){return {device:isMobile?'mobile':'desktop',quality:qualityLevel,pixelRatio:renderer.getPixelRatio(),fps:Math.round(1000/frameAverage),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,lod:performanceModel.summary};},contactShadows:true,skyLightPaths:weather.lightPaths,get state(){return {view:currentView,walk,touring:tour.active,paused:tour.paused,step:tour.index,bag:tour.bag,balance:tour.balance,destination:tour.itinerary?.destination,position:camera.position.toArray(),rotation:[camera.rotation.x,camera.rotation.y],mainYaw:baseYaw,lookOffset:[tourYaw,tourPitch],recentering,liftFloor:model.atrium.lift.dockFloor,liftOpen:model.atrium.lift.open,ride:!!ride,driving:!!drive,cinema:model.runtime.rooms.find(r=>r.cinema)?.cinema?{level:model.runtime.rooms.find(r=>r.cinema).cinema.level,inside:model.runtime.rooms.find(r=>r.cinema).cinema.inside}:null,doors:model.runtime.doors.map(d=>d.open),peopleVisible:shoppers.group.visible};}};
+window.riversideScene={edition:'v15',get daylight(){return daylight.summary;},stats:model.stats,threeVersion:THREE.REVISION,materialMaps:surfaces.loaded,get performance(){return {device:isMobile?'mobile':'desktop',quality:qualityLevel,pixelRatio:renderer.getPixelRatio(),fps:Math.round(1000/frameAverage),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,lod:performanceModel.summary};},contactShadows:true,skyLightPaths:weather.lightPaths,get state(){return {view:currentView,walk,touring:tour.active,paused:tour.paused,step:tour.index,bag:tour.bag,balance:tour.balance,destination:tour.itinerary?.destination,position:camera.position.toArray(),rotation:[camera.rotation.x,camera.rotation.y],mainYaw:baseYaw,lookOffset:[tourYaw,tourPitch],recentering,liftFloor:model.atrium.lift.dockFloor,liftOpen:model.atrium.lift.open,ride:!!ride,driving:!!drive,cinema:model.runtime.rooms.find(r=>r.cinema)?.cinema?{level:model.runtime.rooms.find(r=>r.cinema).cinema.level,inside:model.runtime.rooms.find(r=>r.cinema).cinema.inside}:null,doors:model.runtime.doors.map(d=>d.open),peopleVisible:shoppers.group.visible};}};

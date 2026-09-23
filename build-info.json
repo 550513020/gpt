@@ -1,5 +1,5 @@
 {
-  "edition": "2026-09-17-v13",
+  "edition": "2026-09-23-v15",
   "entries": [
     "mobile.html",
     "desktop.html"
@@ -20,12 +20,28 @@
     "right-cafe-umbrellas",
     "bakery-seven-pastries",
     "visible-cashier-and-freezer",
-    "niulai-odyssey-posters",
     "raked-cinema-navigation",
     "outer-escalator-circulation",
     "level-forward-tour-camera",
     "smooth-heading-and-recenter",
     "daylight-balanced-shop-lighting",
-    "sparse-stationary-rain-beads"
+    "sparse-stationary-rain-beads",
+    "reference-bakery-floorplan",
+    "one-rear-cashier",
+    "long-right-wall-freezer",
+    "front-centre-red-spiral-stair",
+    "paper-bucket-popcorn-glass-counter",
+    "cola-dispenser",
+    "haidilao-reference-layout",
+    "twelve-condiment-bowls",
+    "larger-bakery-photo-stair",
+    "continuous-basement-to-street-drive",
+    "traffic-signals-crosswalk",
+    "textured-lobed-popcorn",
+    "five-additional-plant-types",
+    "seasonal-water-gardens",
+    "proximity-gentle-water-jets",
+    "cinema-ticket-desk-and-auto-gates",
+    "september-2026-popular-film-posters"
   ]
 }

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import films from './assets/cinema-posters.js?v=13';
+import films from './assets/cinema-posters.js?v=15';
 
 const smallShapes=new Map();
 function smallSlab(api,mat,x,y,z,w,d,r,h){
@@ -40,7 +40,7 @@ export function createCinemaDetails(api,room){
     let texture=posterTextures[index];
     if(!texture){const c=document.createElement('canvas');c.width=420;c.height=600;const g=c.getContext('2d');
       g.fillStyle='#17282b';g.fillRect(0,0,420,600);texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;posterTextures[index]=texture;
-      const image=new Image();image.onload=()=>{if(index===0){g.drawImage(image,20,90,380,380);g.fillStyle='#f5dfb9';g.textAlign='center';g.font='bold 46px Microsoft YaHei';g.fillText('牛 来',210,62);g.font='24px Microsoft YaHei';g.fillText('A 厅 · NIULAI',210,524);g.font='17px Microsoft YaHei';g.fillText('欢乐特别场 · 坐下来笑一会儿',210,568);}else{g.drawImage(image,0,0,420,600);}texture.needsUpdate=true;};image.src=film.data;}
+      const image=new Image();image.onload=()=>{g.drawImage(image,0,0,420,600);texture.needsUpdate=true;};image.src=film.data;}
     const h=width*(film.aspect||450/327);box(dark,x,y,z+.045,width+.075,h+.075,.06);
     const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,h),new THREE.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);mesh.rotation.y=Math.PI;root.add(mesh);
   }

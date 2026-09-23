@@ -1,18 +1,22 @@
-import { refineBakery,buildTwinCinema,refineSpa } from './venue-immersion.js?v=13';
-import { addBakery,addToySuperstore } from './retail-upgrades.js?v=13';
-import niulaiImage from './assets/niulai-image.js?v=13';
+import {buildCinemaTickets} from './cinema-tickets.js?v=15';
+import {buildHaidilao} from './haidilao.js?v=15';
+import {buildReferenceBakery,BAKERY_PLAN} from './bakery-layout.js?v=15';
+import {buildCinemaConcessions} from './cinema-concessions.js?v=15';
+import { buildTwinCinema,refineSpa } from './venue-immersion.js?v=15';
+import { addToySuperstore } from './retail-upgrades.js?v=15';
+import niulaiImage from './assets/niulai-image.js?v=15';
 import * as THREE from './vendor/three.module.js';
-import { createMerchandise } from './merchandise.js?v=13';
-import { createRetailDetails } from './retail-detail.js?v=13';
-import { addSeafoodTank } from './water-features.js?v=13';
-import { planCustomerRoute } from './shop-routes.js?v=13';
-import { addVenueProps } from './mall-services.js?v=13';
+import { createMerchandise } from './merchandise.js?v=15';
+import { createRetailDetails } from './retail-detail.js?v=15';
+import { addSeafoodTank } from './water-features.js?v=15';
+import { planCustomerRoute } from './shop-routes.js?v=15';
+import { addVenueProps } from './mall-services.js?v=15';
 
 export const STORE_PLANS = {
   mainLeft:[
     {type:'jewelry',name:'璟序珠宝 · JING',wall:'#e0d5bf',floor:'#d6ccba',accent:'#44665e'},
     {type:'clothes',name:'叙织 · TEXTURE STUDIO',wall:'#dfded4',floor:'#c3bba9',accent:'#7b8373'},
-    {type:'hotpot',name:'山隐 · 铜锅火锅',wall:'#996b4d',floor:'#858474',accent:'#733d2a'},
+    {type:'hotpot',name:'海底捞 · HAIDILAO',wall:'#d5c9b7',floor:'#b9b6a9',accent:'#ae282d'},
     {type:'ktv',name:'星屿 · STAR KTV',wall:'#424253',floor:'#373643',accent:'#725775'}
   ],
   mainRight:[
@@ -37,7 +41,7 @@ export const STORE_PLANS = {
 export function storeFor(cx,floor,secondary){return STORE_PLANS[(secondary?'garden':'main')+(cx<0?'Left':'Right')][floor];}
 
 export function createRetailRoom(api,cx,base,cz,w,d,spec){
-  const room={cx,base,cz,w,d,spec,entry:{x:cx,z:cz-d/2,width:2.8},blockers:[],garments:[],secureCases:[],spotlights:[],mirrors:[],fittingRooms:[]};api.runtime.rooms.push(room);
+  const room={cx,base,cz,w,d,spec,entry:{x:cx-(spec.type==='bakery'?BAKERY_PLAN.entryX:0),z:cz-d/2,width:2.8},blockers:[],garments:[],secureCases:[],spotlights:[],mirrors:[],fittingRooms:[]};api.runtime.rooms.push(room);
   const remember=(x,y,z,width,height,depth,rotation=0)=>{
     if(width>.2&&depth>.2&&height>.13&&y-height/2<base+1.7&&y+height/2>base+.34){
       const c=Math.abs(Math.cos(rotation)),s=Math.abs(Math.sin(rotation));room.blockers.push({x,z,w:width*c+depth*s,d:depth*c+width*s});
@@ -112,7 +116,7 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
   function sofa(x,y,z,width=2.6,color=accent){slab(color,x,y+.22,z,width,.86,.16,.3);box(color,x,y+.76,z+.36,width,.66,.16);for(const dx of [-width/2+.08,width/2-.08])box(color,x+dx,y+.6,z,.16,.52,.83);box(M.darkMetal,x,y+.1,z,width-.25,.17,.62);}
 
   if(spec.superstore){addToySuperstore({...api,box,slab},room);
-  }else if(spec.type==='bakery'){addBakery({...api,box,slab},room);refineBakery({...api,box,slab},room);
+  }else if(spec.type==='bakery'){buildReferenceBakery({...api,box,slab},room);
   }else if(['jewelry','toys','bags'].includes(spec.type)){
     const jewelry=spec.type==='jewelry',toys=spec.type==='toys';
     const bays=jewelry?4:toys?6:3;
@@ -172,14 +176,7 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
     for(const dx of [-4.5,4.5]){slab(timber,cx+dx,base+.13,front+.15,3.1,.83,.12,.43);for(let j=0;j<4;j++)goods(j%2?'sandals':'sneakers',cx+dx+(j-1.5)*.68,base+.63,front+.15,.9,j);}
     label('SUMMER / 亚麻 · 短裤 · 凉鞋',cx,base+3.18,back-.17,4,Math.PI,spec.accent,'#e4dfd3');for(const dx of [-5,0,5])lineLight(cx+dx,cz,3.3);
   }else if(spec.type==='hotpot'){
-    for(const dx of [-4.4,4.4])for(const dz of [-3.7,.8])table(cx+dx,cz+dz,true);
-    for(let i=0;i<48;i++)box(timber,cx-w/2+1+i*(w-2)/47,base+1.9,back-.16,.075,3.6,.12);
-    for(const dx of [-4.4,4.4])for(const dz of [-3.7,.8]){inst(new THREE.CylinderGeometry(.13,.46,.55,16),M.bronze,cx+dx,base+3.24,cz+dz);box(M.darkMetal,cx+dx,base+3.7,cz+dz,.22,.55,.22);}
-    addSeafoodTank({...api,box},room,cx-4.5,back-1.25);
-    // A dedicated self-service station keeps food trays out of the main aisle.
-    box(timber,cx+4.1,base+.59,back-1.05,4.0,1.05,1.0);box(M.marble,cx+4.1,base+1.16,back-1.05,4.1,.08,1.08);
-    ['beef','mushrooms','greens','shrimp','tofu','meatballs','lotus'].forEach((kind,i)=>food(kind,cx+4.1+(i-3)*.51,base+1.22,back-1.1,.78));
-    label('鲜切 · 菌菇 · 时蔬',cx+4.1,base+1.8,back-.21,3.8,Math.PI,spec.accent,'#edd5ab');
+    buildHaidilao({...api,box,slab},room);
   }else if(spec.type==='bistro'){
     room.menu=['steak','pasta','salad'];
     for(const dx of [-5.7,-1.8])for(const [j,dz] of [-3.5,.1,3.6].entries()){table(cx+dx,cz+dz);food(room.menu[j],cx+dx,base+.96,cz+dz,1.25);}
@@ -207,6 +204,8 @@ export function createRetailRoom(api,cx,base,cz,w,d,spec){
     for(const dx of [-4.2,4.2])for(let i=0;i<10;i++)box(timber,cx+dx-1.5+i*.33,base+1.8,cz+.05,.055,3.2,.12);
   }else if(spec.type==='cinema'){
     buildTwinCinema({...api,box,slab},room,chair,screen,accent);
+    buildCinemaConcessions({...api,box,slab},room);
+    buildCinemaTickets(api,room);
   }else if(spec.type==='spa'){
     for(const dx of [-4.4,4.4])for(const dz of [-1.8,3.3]){
       const x=cx+dx,z=cz+dz;sofa(x,base,z,2.5,accent);slab(M.ivory,x,base+.22,z-.65,2.4,.95,.15,.23);

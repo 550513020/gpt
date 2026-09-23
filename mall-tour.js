@@ -1,8 +1,8 @@
 import * as THREE from './vendor/three.module.js';
-import { LEVELS,levelAt } from './mall-navigation.js?v=13';
-import { createLiftJourney } from './lift-journey.js?v=13';
-import {createHeadingController,routeHeading,prepareRouteView,angleDelta,headingOf} from './journey-view.js?v=13';
-import { LOCATIONS } from './scene.js?v=13';
+import { LEVELS,levelAt } from './mall-navigation.js?v=15';
+import { createLiftJourney } from './lift-journey.js?v=15';
+import {createHeadingController,routeHeading,prepareRouteView,angleDelta,headingOf} from './journey-view.js?v=15';
+import { LOCATIONS } from './scene.js?v=15';
 
 const lengthOf=path=>path.slice(1).reduce((n,p,i)=>n+p.distanceTo(path[i]),0);
 const smooth=t=>{t=THREE.MathUtils.clamp(t,0,1);return t*t*(3-2*t);};
@@ -27,12 +27,12 @@ export function buildShoppingItinerary(model,navigator,budget=2000){
   walk('NOMA · 浏览旅行箱与皮具',-13.8,18.2);pause('旅行箱、手袋与小配饰',[-13.8,6.2,27.3],4);
   if(tier>0){walk('PELLE · 选择一只夏日手袋',16,-4.8);pause('看看展柜中的手袋',[21,6.2,-1],4);walk('皮具工坊收银台',21.95,-7.45);checkout(tier===2?'经典皮革手袋':'夏日斜挎包',tier===2?3980:680,[23.8,6,-7.45]);}
   rest(1);ride(2);
-  walk('3F · 山隐铜锅与鲜活海鲜缸',-16,-5.8);walk('沿过道走到海鲜缸前',-20.5,4.6);pause('水中的鱼、虾与蟹',[-20.5,10.75,6.25],5);
+  walk('3F · 海底捞迎宾前台与屏风',-16,-6.6);walk('绕过屏风，前往自选小料台',-15,-1.8);pause('姜葱蒜、醋、蚝油与香油',[-13.9,10.75,-3.4],5);
   if(tier===1){walk('凪日料 · 寿司与刺身',13.8,19.7);pause('坐下享用日料定食',[18,10.5,24],5,{kind:'rest',minutes:20});walk('日料店收银台',18.5,16.8);checkout('日料双人定食',268,[20.5,10.5,16.8]);}
-  else if(tier===0){walk('麦屿面包店 · 选购与下午茶',16,-4.8);pause(remaining>=88?'坐下享用午餐':'在餐厅门边看看菜单',[20.4,10.35,-3.7],remaining>=88?5:3,{kind:remaining>=88?'rest':'pause',minutes:20});walk('面包店收银台',21.95,-7.45);checkout('面包与咖啡套餐',88,[23.8,10.6,-7.45]);}
-  else {walk('火锅餐桌旁',-20.4,-5.75);pause('坐下享用鲜切与海鲜火锅',[-20.4,10.35,-3.7],5,{kind:'rest',minutes:20});walk('火锅店收银台',-21.95,-7.45);checkout('海鲜火锅双人套餐',488,[-23.8,10.6,-7.45]);}
-  rest(2);ride(3);walk('4F · 中庭右侧光幕影院，穿过遮光前厅',9.45,23);pause('坐下看一会儿《牛来》',[9.45,16.15,31.05],5,{kind:'rest',minutes:20});
-  walk('爆米花与可乐前台',18.5,16.8);checkout('爆米花与可乐',[38,88,108][tier],[20.5,15.7,16.8]);
+  else if(tier===0){walk('麦屿面包店 · 右侧入口与选购',9.65,-6.1);pause(remaining>=88?'坐下享用午餐':'在餐厅门边看看菜单',[20.4,10.35,-3.7],remaining>=88?5:3,{kind:remaining>=88?'rest':'pause',minutes:20});walk('面包店 · 后墙唯一收银台',14.9,4.25);checkout('面包与咖啡套餐',88,[14.9,10.6,6.05]);}
+  else {walk('海底捞卡座旁',-20.7,.2);pause('坐下享用鸳鸯锅与鲜切食材',[-23,10.35,-.4],5,{kind:'rest',minutes:20});walk('海底捞前台结账',-14.5,-6.6);checkout('海底捞双人火锅套餐',488,[-11.5,10.6,-6.45]);}
+  rest(2);ride(3);walk('4F · 中庭右侧光幕影院，穿过遮光前厅',9.45,23);pause('坐下看一会儿《欢迎来龙餐馆》',[9.45,16.15,31.05],5,{kind:'rest',minutes:20});
+  walk('玻璃柜纸桶爆米花与可乐前台',18.65,18.5);checkout('爆米花与可乐',[38,88,108][tier],[20.5,15.7,16.8]);
   walk('沐禾足浴 · 暖水与休憩',-13.8,23.4);pause('看看足浴沙发与泡脚水盆',[-18.2,15.1,22.2],4);
   if(tier>0){pause('坐下享受足浴休憩',[-18.2,15.1,22.2],5,{kind:'rest',minutes:20});walk('足浴店服务前台',-18.5,16.8);checkout('足浴休憩服务',tier===2?298:158,[-20.5,15.2,16.8]);}
   walk('星屿 KTV · 麦克风与点歌台',-16,-5);pause('看看包厢与投影',[-11.4,16.3,5],4);

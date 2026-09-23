@@ -1,8 +1,8 @@
 import * as THREE from './vendor/three.module.js';
-import { fixtureBlocks } from './shop-routes.js?v=13';
-import { circulationHeight } from './circulation.js?v=13';
+import { fixtureBlocks } from './shop-routes.js?v=15';
+import { circulationHeight } from './circulation.js?v=15';
 
-import {cinemaFloorOffset} from './cinema-rake.js?v=13';
+import {cinemaFloorOffset} from './cinema-rake.js?v=15';
 
 export const LEVELS=[0,4.65,9.3,13.95,18.68,-4.2,-8.4];
 export const levelAt=y=>LEVELS.reduce((best,h,i)=>Math.abs(y-h-1.7)<Math.abs(y-LEVELS[best]-1.7)?i:best,0);
@@ -35,7 +35,7 @@ export function createMallNavigator(model){
     ...(f===4?[...model.roof.walkables,...model.air.walkables]:f>0&&f<4?[{x:0,z:8.5,w:11.4,d:2.2,y},{x:0,z:33.6,w:13,d:2.2,y},{x:0,z:37.65,w:3.15,d:6.4,y},...[-20,20].map(x=>({x,z:12.2,w:4.6,d:4.65,y}))]:[])
   ]);
   function supported(x,z,f){
-    if(f===0)return x>-42&&x<42&&z>-30&&z<68.1&&!(x>40.2&&z>-21.3&&z<45.3);
+    if(f===0)return x>-72&&x<72&&z>-50&&z<68.1&&!(x>40.2&&z>-21.3&&z<45.3);
     if(f<4&&model.runtime.terraces.some(r=>Math.abs(r.y-LEVELS[f])<.1&&roundedDistance(x,z,r.x,r.z,r.w,r.d,r.r)<-.1))return true;
     return rects[f].some(p=>p.r?roundedDistance(x,z,p.x,p.z,p.w,p.d,p.r)<-.14:inRect(x,z,p,.01));
   }
@@ -50,13 +50,13 @@ export function createMallNavigator(model){
   function clear(x,z,f,doors=false){
     if(inCirculationGap(x,z,f))return false;
     if(!supported(x,z,f))return false;const y=LEVELS[f];
-    for(const r of rooms){if(Math.abs(r.base-y)>.1)continue;const sd=roundedDistance(x,z,r.cx,r.cz,r.w,r.d,2.6),entry=Math.abs(x-r.cx)<1.13&&Math.abs(z-r.entry.z)<.55;
+    for(const r of rooms){if(Math.abs(r.base-y)>.1)continue;const sd=roundedDistance(x,z,r.cx,r.cz,r.w,r.d,2.6),entry=Math.abs(x-r.entry.x)<1.13&&Math.abs(z-r.entry.z)<.55;
       if(Math.abs(sd)<.26&&!entry)return false;
       if(sd<.1){if(fixtureBlocks(r,x,z,.21))return false;
         if(z>r.cz+r.d/2-.8)return false;
         if(Math.abs(Math.abs(x-r.cx)-(r.w/2-.53))<.21&&Math.abs(z-r.cz-.55)<(r.d-3.8)/2+.2)return false;
       }
-      if(doors&&r.door&&r.door.open<.85&&Math.abs(x-r.cx)<1.4&&Math.abs(z-r.door.z)<.27)return false;
+      if(doors&&r.door&&r.door.open<.85&&Math.abs(x-r.entry.x)<1.4&&Math.abs(z-r.door.z)<.27)return false;
     }
     if(f<4&&Math.abs(z-63.22)<.32&&Math.abs(x)<12.3&&Math.abs(x+3.5)>1.0)return false;
     if(model.atrium.flights.some(r=>(f===r.lowerFloor||f===r.upperFloor)&&Math.abs(x-r.x)<.87&&z>44.3&&z<54.95))return false;
@@ -66,7 +66,7 @@ export function createMallNavigator(model){
     return !barriers[f].some(b=>x>b.minX&&x<b.maxX&&z>b.minZ&&z<b.maxZ&&segmentDistance(x,z,b)<.19);
   }
   function eyeHeight(x,z,f){const room=rooms.find(r=>r.cinema&&Math.abs(r.base-LEVELS[f])<.1);return LEVELS[f]+1.7+(room?cinemaFloorOffset(room,x,z):0);}
-  const cache=new Map(),step=.42,minX=-33.6,minZ=-13.5,nx=190,nz=199;
+  const cache=new Map(),step=.42,minX=-42,minZ=-50,nx=264,nz=285;
   function grid(f){if(cache.has(f))return cache.get(f);const free=new Uint8Array(nx*nz);for(let i=0;i<free.length;i++)free[i]=clear(minX+(i%nx)*step,minZ+Math.floor(i/nx)*step,f)?1:0;cache.set(f,free);return free;}
   const coord=i=>new THREE.Vector3(minX+(i%nx)*step,0,minZ+Math.floor(i/nx)*step);
   function closest(p,f){const free=grid(f);let best=-1,dist=Infinity;for(let i=0;i<free.length;i++)if(free[i]){const v=coord(i),d=(v.x-p.x)**2+(v.z-p.z)**2;if(d<dist){dist=d;best=i;}}if(dist>2.5**2)throw Error(`No walkable point near ${p.x},${p.z} at ${f+1}F`);return best;}

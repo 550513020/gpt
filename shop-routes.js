@@ -12,7 +12,7 @@ export function planCustomerRoute(room,root,routeGroup){
   for(let id=0;id<free.length;id++){const p=point(id);free[id]=fixtureBlocks(room,p.x,p.z,margin)?0:1;}
   const neighbours=id=>{const x=id%nx,z=Math.floor(id/nx);return [x>0?id-1:-1,x<nx-1?id+1:-1,z>0?id-nx:-1,z<nz-1?id+nx:-1].filter(i=>i>=0&&free[i]);};
   function closest(x,z,mask=free){let best=-1,dist=Infinity;for(let i=0;i<mask.length;i++)if(mask[i]){const p=point(i),v=(p.x-x)**2+(p.z-z)**2;if(v<dist){dist=v;best=i;}}return best;}
-  const start=closest(cx,minZ),connected=new Uint8Array(free.length),queue=[start];connected[start]=1;
+  const start=closest(room.entry.x,minZ),connected=new Uint8Array(free.length),queue=[start];connected[start]=1;
   for(let k=0;k<queue.length;k++)for(const n of neighbours(queue[k]))if(!connected[n]){connected[n]=1;queue.push(n);}
   const reverse=['toys','bags','japanese','ktv'].includes(spec.type)?-1:1;
   const targets=[{x:cx-reverse*w*.25,z:cz-1},{x:cx-reverse*w*.23,z:cz+d*.29},{x:cx+reverse*w*.23,z:cz+d*.29},{x:cx+reverse*w*.23,z:cz-1},room.checkout.queue];
@@ -22,7 +22,7 @@ export function planCustomerRoute(room,root,routeGroup){
   const points=ids.map(point),geometry=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p.x,base+(spec.type==='cinema'?.93:.285),p.z)));
   const line=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#40cbb5',transparent:true,opacity:.8,depthTest:false}));line.renderOrder=20;line.userData.excludeAO=true;routeGroup.add(line);
   const arrows=new THREE.Group();for(let i=8;i<points.length;i+=14){const a=points[i-1],b=points[i],direction=new THREE.Vector3(b.x-a.x,0,b.z-a.z).normalize(),arrow=new THREE.ArrowHelper(direction,new THREE.Vector3(b.x,base+.29,b.z),.55,0x40cbb5,.2,.14);arrow.userData.excludeAO=true;arrows.add(arrow);}routeGroup.add(arrows);
-  return {clearWidth:margin*2,points,closed:ids[0]===ids[ids.length-1],connectedCells:queue.length,stops:stops.map(point),entryDistance:Math.abs(point(start).x-cx)};
+  return {clearWidth:margin*2,points,closed:ids[0]===ids[ids.length-1],connectedCells:queue.length,stops:stops.map(point),entryDistance:Math.abs(point(start).x-room.entry.x)};
 }
 
 export function shopBlocks(model,position,x,z){

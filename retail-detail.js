@@ -29,6 +29,7 @@ export function createRetailDetails(api,room){
     root.add(mesh);room.mirrors.push({mesh,width,height});
   }
   function checkout(){
+    if(room.checkout)return room.checkout;
     // Counter is deliberately beside the entrance, leaving a 2.8 m door throat.
     const side=cx<0?-1:1,x=cx+side*(w/2-2.55),z=cz-d/2+1.05;
     slab(M.walnut,x,base+.18,z,2.3,1.03,.1,.91);box(M.marble,x,base+1.13,z,2.38,.07,1.09);

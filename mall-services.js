@@ -17,15 +17,7 @@ export function addVenueProps(api,room){
   }
   if(spec.type==='cinema'){
     for(const side of [-1,1])projector(cx+side*4.35,cz-2);
-    const x=cx-w/2+2.35,z=cz-d/2+1.05;
-    box(M.coral,x,base+1.22,z,.79,.17,.58);box(M.coral,x,base+2.18,z,.86,.15,.64);
-    const pane=new THREE.Mesh(new THREE.BoxGeometry(.75,.81,.54),vitrine);pane.position.set(x,base+1.71,z);glassGroup.add(pane);
-    for(let j=0;j<60;j++)sphere(M.cream,x+Math.sin(j*2.4)*.31,base+1.4+Math.floor(j/12)*.025,z+Math.cos(j*2.4)*.2,.032);
-    inst(C,M.bronze,x,base+1.97,z,.19,.16,.19);label('POPCORN',x,base+2.19,z-.33,.75,Math.PI,'#934735','#fff0cc');room.props.push('popcornMachine');
-    const vx=cx+Math.min(8.05,w/2-1.25),vz=cz-5.4;box(M.coral,vx,base+1.21,vz,1.12,2.08,.83);room.blockers.push({x:vx,z:vz,w:1.12,d:.83});
-    box(M.black,vx-.13,base+1.46,vz-.428,.68,1.35,.025);
-    for(let row=0;row<4;row++)for(let j=0;j<3;j++){const xx=vx-.36+j*.23,yy=base+1.04+row*.3;inst(C,j%2?M.teal:M.coral,xx,yy,vz-.456,.066,.2,.066);inst(C,M.ivory,xx,yy+.103,vz-.456,.066,.006,.066);box(M.ivory,xx,yy,vz-.521,.09,.06,.005);}
-    box(M.teal,vx+.39,base+1.52,vz-.427,.14,.28,.02);box(M.black,vx,base+.46,vz-.433,.61,.2,.04);label('COLA',vx,base+2.14,vz-.441,.72,Math.PI,'#934735','#fff0cc');room.props.push('colaVendingMachine');
+    room.props.push('paperBucketPopcornCounter','colaDispenser');
   }
 }
 

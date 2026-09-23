@@ -1,61 +1,8 @@
 import * as THREE from './vendor/three.module.js';
-import {createCinemaDetails,buildPowerBankCabinet} from './venue-details.js?v=13';
+import {createCinemaDetails,buildPowerBankCabinet} from './venue-details.js?v=15';
 
-import {createPatisserie} from './patisserie.js?v=13';
-import {ROW_RISES,cinemaRakeSections,buildCinemaRake} from './cinema-rake.js?v=13';
 
-export function refineBakery(api,room){
-  const {box,slab,inst,sphere,tube,label,root,glassGroup,vitrine,mats:M,unitCylinder:C}=api,{cx,cz,base:y}=room;
-  const red=new THREE.MeshStandardMaterial({color:'#913a32',roughness:.68}),cream=new THREE.MeshStandardMaterial({color:'#e9cc94',roughness:.88}),chocolate=new THREE.MeshStandardMaterial({color:'#583524',roughness:.85});
-  const flavors=['#c885a0','#a2b278','#d1ad62','#9575a0'].map(color=>new THREE.MeshStandardMaterial({color,roughness:.82}));
-  room.menu.push('cookie','macaron','canele','tart','pretzel');room.bakery.photoStair=true;room.bakery.trays=true;
-  function glass(x,z,w,d,yy=y+1.4,h=.6){const p=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),vitrine);p.position.set(x,yy,z);glassGroup.add(p);}
-  for(const side of [-1,1]){glass(cx+side*3.1,cz-.3,1.34,4.75);glass(cx+side*3.8,cz+2,2.72,1.2);box(red,cx+side*3.1,y+.68,cz-2.72,1.3,.48,.025);}
-  const {pastry}=createPatisserie(api,room);
-  // An actual open well, with a recessed interior and two thin sliding lids.
-  const fx=cx-4.8,fz=cz+5.85;
-  box(red,fx,y+.38,fz,2.6,.52,1.1);box(M.ivory,fx,y+.66,fz,2.44,.055,.95);
-  for(const dx of [-1.25,1.25])box(red,fx+dx,y+.92,fz,.1,.56,1.1);
-  for(const dz of [-.5,.5])box(red,fx,y+.92,fz+dz,2.4,.56,.1);
-  for(let j=0;j<5;j++){
-    const xx=fx-1+j*.5;box(M.ivory,xx,y+.84,fz,.43,.29,.75);
-    box(flavors[j%4],xx,y+1.00,fz,.38,.03,.69);
-    for(let k=0;k<3;k++)sphere(flavors[j%4],xx,y+1.035,fz+(k-1)*.19,.15,.028,.082);
-  }
-  for(const dx of [-.61,.61]){glass(fx+dx,fz,1.2,.93,y+1.225,.025);box(M.bronze,fx+dx,y+1.25,fz-.34,.23,.024,.026);}
-  box(M.bronze,fx,y+1.23,fz,.035,.035,1.05);
-  label('滑盖冰柜 · GELATO −18°C',fx,y+.82,fz-.56,2.3,Math.PI,'#8c3b32','#f8dfaf');
-  label('冰淇淋 · 冷冻甜品',fx,y+2.0,fz+.5,2.5,Math.PI,'#8c3b32','#fff2d7');
-  room.bakery.freezer={x:fx,z:fz,slidingLids:2,flavors:5};
-  // The entry glass case is exclusively macarons; the islands carry other pastries.
-  box(red,cx+4.5,y+.55,cz-5.1,2.5,.9,1.1);glass(cx+4.5,cz-5.1,2.48,1.08,y+1.38,.65);
-  box(M.marble,cx+4.5,y+1.025,cz-5.1,2.5,.04,1.1);
-  for(let j=0;j<12;j++)pastry('macaron',cx+3.6+(j%4)*.6,y+1.06,cz-5.45+Math.floor(j/4)*.35,j);
-  label('MACARON · 四色马卡龙',cx+4.5,y+.65,cz-5.67,2.3,Math.PI,'#8c3b32','#ffe8ba');
-  room.bakery.glassCases=['macarons','mixed-patisserie','chilled-cakes'];
-  // Customer tray / tong station beside the entry, with a separate tasting board.
-  slab(M.wood,cx+2.45,y+.1,cz-6.8,1.35,.72,.12,.84);
-  for(let j=0;j<7;j++){slab(M.walnut,cx+2.2,y+.99+j*.026,cz-6.8,.67,.45,.045,.022);box(M.bronze,cx+2.86,y+1.01+j*.025,cz-6.8,.025,.022,.34,.2);}
-  label('取托盘 · 面包夹',cx+2.45,y+.65,cz-7.18,1.28,Math.PI,'#8c3b32','#ffe9c3');
-  slab(M.wood,cx-1.25,y+.12,cz-5.45,1.05,.7,.1,.87);slab(M.walnut,cx-1.25,y+1.01,cz-5.45,.95,.6,.08,.025);
-  for(let j=0;j<8;j++)box(cream,cx-1.53+(j%4)*.18,y+1.08,cz-5.6+Math.floor(j/4)*.25,.13,.11,.16);
-  label('今日试吃',cx-1.25,y+.64,cz-5.81,.95,Math.PI,'#8c3b32','#ffe9c3');
-  // Low spiral photo stair stays below the shop ceiling; an open approach faces the foyer.
-  const sx=cx-5.7,sz=cz-5.3,r=1.35;room.blockers.push({x:sx,z:sz,w:2.8,d:2.8});
-  inst(C,red,sx,y+1.1,sz,.09,2.2,.09);
-  let previous=null;
-  for(let i=0;i<16;i++){
-    const a=-Math.PI*.7+i*.285,b=a+.27,h=.075*(i+1),shape=new THREE.Shape();
-    shape.absarc(0,0,r,a,b,false);shape.lineTo(Math.cos(b)*.17,Math.sin(b)*.17);shape.absarc(0,0,.17,b,a,true);shape.closePath();
-    const g=new THREE.ExtrudeGeometry(shape,{depth:.065,bevelEnabled:false,steps:1,curveSegments:3});g.rotateX(-Math.PI/2);inst(g,i%2?red:M.walnut,sx,y+h,sz);
-    const p=new THREE.Vector3(sx+Math.cos(a)*r,y+h+.9,sz-Math.sin(a)*r);tube(new THREE.Vector3(p.x,y+h,p.z),p,.016,red);if(previous)tube(previous,p,.026,red);previous=p;
-  }
-  label('麦屿 · 红色旋梯打卡',sx,y+2.72,sz+1.5,3.2,Math.PI,'#8c3b32','#ffe3b5');
-  // An additional red café table links the photo corner to the existing bench seats.
-  inst(C,red,cx-7,y+.8,cz+4.7,.67,.07,.67);inst(C,M.bronze,cx-7,y+.42,cz+4.7,.05,.75,.05);room.blockers.push({x:cx-7,z:cz+4.7,w:1.4,d:1.4});
-  for(const dx of [-.95,.95]){slab(red,cx-7+dx,y+.35,cz+4.7,.54,.55,.1,.16);box(red,cx-7+dx,y+.8,cz+4.94,.54,.6,.1);}
-  room.bakery.breads+=46;room.bakery.seating+=2;
-}
+import {ROW_RISES,cinemaRakeSections,buildCinemaRake} from './cinema-rake.js?v=15';
 
 export function buildTwinCinema(api,room,chair,screen,accent){
   const {box,root,mats:M,label,runtime}=api,{cx,cz,base:y,w,d}=room;
@@ -95,7 +42,7 @@ export function buildTwinCinema(api,room,chair,screen,accent){
     details.poster(side<0?0:1,x-2.6,y+2.0,split-.13,1.12);
     room.cinema.halls.push({x,z:cz,side,lamps,lights,screen:{x,z:back,bottom:y+1.25,top:y+3.75},seatCount:24,rows:4,poster:film.title,release:film.release});
   }
-  for(const side of [-1,1]){details.poster(side<0?0:1,cx+side*4.35,y+2.03,zFront-.16,1.42);label(side<0?'A 厅 · 牛来':'B 厅 · 奥德赛',cx+side*4.35,y+.79,zFront-.16,3.2,Math.PI,'#594c56','#e5d7bd');}
+  for(const side of [-1,1]){details.poster(side<0?0:1,cx+side*4.35,y+2.03,zFront-.16,1.42);label((side<0?'A 厅 · ':'B 厅 · ')+details.films[side<0?0:1].title,cx+side*4.35,y+.79,zFront-.16,3.2,Math.PI,'#594c56','#e5d7bd');}
   runtime.updates.push((dt,time,camera)=>{
     if(!camera)return;const c=room.cinema,p=camera.position,inside=p.y>y+.6&&p.y<y+3.7&&Math.abs(p.x-cx)<w/2-.4&&p.z>split&&p.z<back+.2;
     if(!inside){c.still=0;c.mode='auto';}else if(p.distanceToSquared(c.lastPosition)>.0007)c.still=0;else c.still+=dt;
