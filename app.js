@@ -2,7 +2,7 @@ import { createScenePerformance } from './performance.js?v=15';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import { Sky } from 'three/addons/Sky.js';
-import { createArchitecture, LOCATIONS } from './scene.js?v=15';
+import { createArchitecture, LOCATIONS } from './scene.js?v=15.2';
 import { stairWalkingHeight } from './atrium.js?v=15';
 import { loadSurfaceMaps } from './materials.js?v=15';
 import { createLightingPipeline } from './lighting.js?v=15';

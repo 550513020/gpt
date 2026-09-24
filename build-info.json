@@ -1,5 +1,5 @@
 {
-  "edition": "2026-09-23-v15",
+  "edition": "2026-09-24-v15.2",
   "entries": [
     "mobile.html",
     "desktop.html"
@@ -42,6 +42,7 @@
     "seasonal-water-gardens",
     "proximity-gentle-water-jets",
     "cinema-ticket-desk-and-auto-gates",
-    "september-2026-popular-film-posters"
+    "september-2026-popular-film-posters",
+    "symmetric-cream-bakery-columns"
   ]
 }
