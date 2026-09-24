@@ -1,6 +1,6 @@
 import {buildCinemaTickets} from './cinema-tickets.js?v=15';
 import {buildHaidilao} from './haidilao.js?v=15';
-import {buildReferenceBakery,BAKERY_PLAN} from './bakery-layout.js?v=15';
+import {buildReferenceBakery,BAKERY_PLAN} from './bakery-layout.js?v=15.3';
 import {buildCinemaConcessions} from './cinema-concessions.js?v=15';
 import { buildTwinCinema,refineSpa } from './venue-immersion.js?v=15';
 import { addToySuperstore } from './retail-upgrades.js?v=15';

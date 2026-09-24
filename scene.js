@@ -1,12 +1,12 @@
 import {buildWaterGardens} from './water-gardens.js?v=15';
 import {addPlantVariety} from './landscape-variety.js?v=15';
 import {buildStreetConnection} from './streets.js?v=15';
-import {BAKERY_PLAN} from './bakery-layout.js?v=15';
+import {BAKERY_PLAN} from './bakery-layout.js?v=15.3';
 import { refineRoof } from './venue-immersion.js?v=15';
 import { buildSpatialBatches } from './performance.js?v=15';
 import { buildParking,perforatedSlab,SHAFTS,VEHICLE_RAMP } from './parking.js?v=15';
 import * as THREE from './vendor/three.module.js';
-import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js?v=15';
+import { createRetailRoom, storeFor, STORE_PLANS } from './interiors.js?v=15.3';
 import { buildAtrium } from './atrium.js?v=15';
 import { buildRooftop } from './rooftop.js?v=15';
 import { addAutomaticDoor,updateRetail } from './retail-detail.js?v=15';
@@ -26,8 +26,8 @@ export const LOCATIONS = {
   clothes:{eye:[-16,6.6,-4.8],target:[-16,6.4,3],title:'2F · 叙织服装',description:'独立衣架、叠装陈列与试衣区'},
   bags:{eye:[16,6.6,-4.8],target:[16,6.4,3],title:'2F · PELLE 皮具',description:'皮具展示台与休憩洽谈区'},
   hotpot:{eye:[-20.9,11,-2.6],target:[-15,10.9,2.7],fov:60,title:'3F · 海底捞',description:'迎宾前台与屏风、靠背卡座、鸳鸯锅和自选小料台'},
-  bakery:{eye:[9.65,11,-6.1],target:[16.8,10.9,3.7],title:'3F · 麦屿面包店',description:'右侧入口与长冰柜、后墙单收银台、前侧红色旋梯'},
-  bakeryfront:{eye:[16,11.4,-12.7],target:[16,11.4,-8.4],fov:96,title:'3F · 面包店外立面',description:'对称竖直的奶油白立柱，浅粉收边与红色旋梯呼应'},
+  bakery:{eye:[16-BAKERY_PLAN.entryX,11,-6.1],target:[16.8,10.9,3.7],title:'3F · 麦屿面包店',description:'右侧入口与长冰柜、后墙单收银台、前侧红色旋梯'},
+  bakeryfront:{eye:[16,11.4,-12.7],target:[16,11.4,-8.4],fov:108,title:'3F · 面包店外立面',description:'各层立柱上下对齐，统一柔和粉白色'},
   bakerystair:{eye:[15.3,12.1,.3],target:[16.55,10.9,-6],fov:52,title:'3F · 红色旋梯打卡',description:'加宽旋梯、奶油色背景与柔和拱形灯光'},
   street:{eye:[39,1.7,-30],target:[44,1.7,-40],fov:60,title:'地面道路与停车出口',description:'B1 / B2 连续坡道、城市道路、斑马线与红绿灯'},
   watergarden:{eye:[-26.8,2.45,-27.8],target:[-32,.6,-21.5],fov:60,title:'水岸花园 · 休息水庭',description:'石材浅水池、木座椅与靠近唤醒的轻柔涌泉'},
@@ -103,7 +103,7 @@ export function createArchitecture({maps={},optimize=false}={}){
     concrete:std('#b8b7af',.73,0,{map:stoneTex}),stone:std('#bbb9ae',.82,0,{map:stoneTex}),
     slabTop:std('#a9aaa0',.86),wood:std('#e0c09a',.61,0,{map:woodTex}),walnut:std('#654630',.46),
     bronze:std('#806548',.25,.78),gold:std('#cea664',.2,.86),darkMetal:std('#313c35',.32,.65),
-    bakeryColumn:std('#f3eae4',.74),bakeryColumnTrim:std('#e2cbc9',.7),
+    structuralColumn:std('#f3e4e4',.76),
     marble:std('#e6e0d0',.27,0,{map:marbleTex}),darkMarble:std('#34433c',.25,.06,{map:marbleTex}),
     wall:std('#d6ccb7',.8,0,{emissive:'#bda578',emissiveIntensity:.13}),
     teal:std('#609486',.32,.15),velvet:std('#162d29',.9),ivory:std('#e9ddc6',.64),
@@ -235,16 +235,13 @@ export function createArchitecture({maps={},optimize=false}={}){
         const xx=cx+k*(w-5.2)/6,zz=cz+direction*d/2;box(k%3===0?mats.darkMetal:mats.bronze,xx,base+2.17,zz,.07,3.86,.12);
       }
       for(let j=-1;j<=1;j++)for(const direction of [-1,1])box(mats.bronze,cx+direction*w/2,base+2.13,cz+j*(d-4.8)/3,.11,3.84,.065);
-      // Move the pair together when clearing the bakery's off-centre doorway.
-      // Both columns share one centreline, depth, height and zero rotation.
-      const bakeryFacade=storeFor(cx,floor,secondary).type==='bakery';
-      const columnOffset=bakeryFacade?Math.min(w*.31,Math.abs(entryX)-1.7):w*.31;
+      // One structural grid for every floor: the doorway adapts to the columns.
+      const columnOffset=w*.31;
       for(const side of [-1,1]){
         const px=cx+side*columnOffset,pz=cz-d/2-.2;
-        box(bakeryFacade?mats.bakeryColumn:mats.darkMetal,px,base+2.13,pz,.34,3.9,.45,0);
-        if(bakeryFacade){
-          for(const yy of [base+.23,base+4.03])box(mats.bakeryColumnTrim,px,yy,pz,.4,.1,.49,0);
-        }else box(mats.bronze,px-.13,base+2.14,cz-d/2-.445,.05,3.92,.025);
+        box(mats.structuralColumn,px,base+2.13,pz,.34,3.9,.45,0);
+        for(const yy of [base+.23,base+4.03])box(mats.structuralColumn,px,yy,pz,.4,.1,.49,0);
+        runtime.exteriorBlocks.push({x:px,z:pz,w:.4,d:.49,base});
       }
       if(floor>0){
         const connectorX=(cx<0?-20:20)-tx;
@@ -288,9 +285,9 @@ export function createArchitecture({maps={},optimize=false}={}){
   for(const z of [-7.65,1.1,10.8,34.5]){
     const height=z>30?13.2:15.4;
     for(const side of [-1,1]){
-      box(mats.concrete,side*3.36,height/2,z,.44,height,.65);
-      box(mats.teal,side*3.115,height/2,z-.16,.075,height-.35,.32);
-      for(let i=0;i<4;i++)box(mats.bronze,side*(3.07+i*.085),height/2,z-.35,.018,height-.37,.023);
+      box(mats.structuralColumn,side*3.36,height/2,z,.44,height,.65);
+      box(mats.structuralColumn,side*3.115,height/2,z-.16,.075,height-.35,.32);
+      for(let i=0;i<4;i++)box(mats.structuralColumn,side*(3.07+i*.085),height/2,z-.35,.018,height-.37,.023);
       box(mats.warmGlow,side*2.99,height/2,z-.25,.022,height-.4,.03,0,false);
     }
     box(mats.concrete,0,height-.05,z,7.1,.48,.72);box(mats.teal,0,height-.325,z-.04,6.28,.075,.53);box(mats.warmGlow,0,height-.39,z-.15,6.02,.025,.027,0,false);

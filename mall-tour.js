@@ -2,7 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import { LEVELS,levelAt } from './mall-navigation.js?v=15';
 import { createLiftJourney } from './lift-journey.js?v=15';
 import {createHeadingController,routeHeading,prepareRouteView,angleDelta,headingOf} from './journey-view.js?v=15';
-import { LOCATIONS } from './scene.js?v=15';
+import { LOCATIONS } from './scene.js?v=15.3';
 
 const lengthOf=path=>path.slice(1).reduce((n,p,i)=>n+p.distanceTo(path[i]),0);
 const smooth=t=>{t=THREE.MathUtils.clamp(t,0,1);return t*t*(3-2*t);};

@@ -3,7 +3,7 @@ import {createPatisserie} from './patisserie.js?v=15';
 
 // The supplied sketch is viewed with its entrance at the lower right:
 // left seating, rear cashier, two hooked islands, right cold case, front stair.
-export const BAKERY_PLAN={entryX:6.35,cashier:{x:1.9,z:6.05,w:7.5,d:1.42},freezer:{x:8.42,z:1.1,w:1.86,d:10.5},stair:{x:-.55,z:-6.95,r:2.55}};
+export const BAKERY_PLAN={entryX:4.65,cashier:{x:1.9,z:6.05,w:7.5,d:1.42},freezer:{x:8.42,z:1.1,w:1.86,d:10.5},stair:{x:-.55,z:-6.95,r:2.55}};
 export function buildReferenceBakery(api,room){
   const {glassGroup,mats:M,unitCylinder:C}=api,{cx,cz,base:y}=room;
   // Sketch right is viewer-right from the entrance (negative world X).

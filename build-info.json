@@ -1,5 +1,5 @@
 {
-  "edition": "2026-09-24-v15.2",
+  "edition": "2026-09-24-v15.3",
   "entries": [
     "mobile.html",
     "desktop.html"
@@ -43,6 +43,7 @@
     "proximity-gentle-water-jets",
     "cinema-ticket-desk-and-auto-gates",
     "september-2026-popular-film-posters",
-    "symmetric-cream-bakery-columns"
+    "symmetric-cream-bakery-columns",
+    "all-floor-aligned-pink-white-columns"
   ]
 }
